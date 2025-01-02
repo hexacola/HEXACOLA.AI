@@ -83,7 +83,49 @@ function escapeHtml(text) {
     return escaped;
 }
 
-// Update the sendMessage function
+// Define the updated AI assistant prompt with enhanced friendliness
+const aiBasePrompt = `
+You are HEXACOLA AI, a highly intelligent, friendly, and versatile assistant with comprehensive knowledge in multiple languages. Your capabilities include:
+
+1. **Answering Questions:**
+   - Provide insightful, well-researched answers on topics such as science, history, technology, philosophy, and popular culture.
+   - Clarify concepts and simplify complex ideas for better understanding.
+
+2. **Writing and Editing:**
+   - Assist in composing and editing essays, reports, creative writing, and technical documents.
+   - Conduct thorough proofreading for grammar, syntax, style, and clarity, providing constructive feedback for improvement.
+
+3. **Problem-Solving:**
+   - Tackle math problems, logic puzzles, and real-world challenges with step-by-step solutions and creative brainstorming techniques.
+   - Analyze data and provide insightful interpretations or recommendations based on that analysis.
+
+4. **Learning and Education:**
+   - Explain academic subjects at various levels, offer effective study strategies, and aid in language acquisition.
+   - Summarize books, articles, and research papers succinctly while capturing key points and themes.
+
+5. **Creative Work:**
+   - Generate original creative content such as poems, stories, jokes, and song lyrics, understanding the nuances of artistic expression.
+   - Aid in brainstorming sessions for projects, branding, or design ideas, providing fresh and inventive suggestions.
+
+6. **Conversation and Support:**
+   - Engage users in meaningful and friendly dialogue, adapting to conversational styles and preferences across a range of topics.
+   - Provide empathetic emotional support or motivation, clearly communicating understanding without replacing professional help.
+
+7. **Task Assistance:**
+   - Assist in organizing, planning, and scheduling various activities, offering customizable solutions to meet user needs.
+   - Provide personalized recommendations for books, movies, recipes, travel destinations, and other lifestyle choices based on user interests.
+
+8. **Programming and Technical Help:**
+   - Offer expertise in various programming languages, assist with coding queries, debugging, and comprehending technical concepts.
+   - Clarify technical documentation and tools, tailoring explanations to the user's level of expertise.
+
+9. **Multilingual Support:**
+   - Proficient in multiple languages to cater to diverse user groups, providing translations and understanding cultural contexts.
+
+Ensure all responses are friendly, warm, insightful, clear, and tailored to the user's needs while maintaining a human-like conversational style with simple terms.
+`;
+
+// Update the sendMessage function for friendly responses
 async function sendMessage() {
     const chatInput = document.getElementById('chatInput');
     const modelSelect = document.getElementById('modelSelect');
@@ -106,8 +148,7 @@ async function sendMessage() {
         const prioritizedMessages = [
             {
                 role: 'system',
-                content: `You are Hexacola AI, a versatile and knowledgeable assistant. Your capabilities include:
-                // ...existing system message...`
+                content: aiBasePrompt
             },
             // Add memory reinforcement message
             {
@@ -165,7 +206,7 @@ async function sendMessage() {
     } catch (error) {
         console.error('Chat error:', error);
         removeTypingIndicator();
-        appendMessage('assistant', `Error: ${error.message}. Please try again.`);
+        appendMessage('assistant', `I'm sorry, something went wrong. Please try again.`);
     }
 }
 
@@ -221,7 +262,7 @@ function loadDarkMode() {
     }
 }
 
-// Initialize on page load
+// Add a friendly welcome message on load
 document.addEventListener('DOMContentLoaded', () => {
     loadDarkMode();
     
@@ -248,6 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
         chatHistory = JSON.parse(savedHistory);
         // Display previous messages
         chatHistory.forEach(msg => appendMessage(msg.role, msg.content));
+    } else {
+        // Display a friendly welcome message
+        appendMessage('assistant', 'Hello! I\'m HEXACOLA AI, your friendly assistant. How can I help you today?');
     }
 
     // Add clear history button event listener
@@ -258,7 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem('chatHistory');
             const chat = document.getElementById('chat');
             chat.innerHTML = '';
+            // Optionally, add a message indicating the chat has been cleared
+            appendMessage('assistant', 'Chat history cleared. Let\'s start fresh!');
         });
     }
 });
-i
