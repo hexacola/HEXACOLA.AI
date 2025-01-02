@@ -119,6 +119,15 @@ You are hexacola, an advanced AI assistant with extensive knowledge and superior
 Ensure all responses are precise, insightful, and tailored to the user's needs while maintaining a clear and professional tone.
 `;
 
+// Add AI thinking process steps
+const aiThinkingSteps = {
+    understand: "Understanding your query...",
+    analyze: "Analyzing context and components...",
+    generate: "Generating thoughtful response...",
+    verify: "Verifying accuracy and relevance...",
+    formulate: "Formulating final response..."
+};
+
 // Update the sendMessage function for friendly responses
 async function sendMessage() {
     const chatInput = document.getElementById('chatInput');
@@ -140,6 +149,9 @@ async function sendMessage() {
     appendMessage('user', message);
     chatInput.value = '';
     showTypingIndicator();
+
+    // Show AI thinking process
+    showThinkingProcess();
 
     try {
         const contextSize = 15; // Increased context window
@@ -163,6 +175,23 @@ async function sendMessage() {
                 content: 'The following message is particularly important for context:'
             },
             lastMessages[lastMessages.length - 1] // The last message
+        ];
+
+        // Create thinking context
+        const thinkingContext = {
+            query: message,
+            components: message.split(' ').filter(word => word.length > 3),
+            intent: detectIntent(message),
+            context: chatHistory.slice(-3)
+        };
+
+        // Enhanced message array with thinking context
+        const enhancedMessages = [
+            {
+                role: 'system',
+                content: `${aiBasePrompt}\n\nThinking Context:\n${JSON.stringify(thinkingContext, null, 2)}`
+            },
+            ...chatHistory
         ];
 
         const response = await fetchWithRetry('https://text.pollinations.ai/', {
@@ -193,6 +222,7 @@ async function sendMessage() {
         }
 
         if (assistantMessage) {
+            removeThinkingProcess();
             // Cache the response
             responseCache[message] = assistantMessage;
             // Add assistant message to history
@@ -208,9 +238,61 @@ async function sendMessage() {
 
     } catch (error) {
         console.error('Chat error:', error);
-        removeTypingIndicator();
+        removeThinkingProcess();
         appendMessage('assistant', `I'm sorry, something went wrong. Please try again.`);
     }
+}
+
+// Add new functions for AI thinking visualization
+function showThinkingProcess() {
+    const chat = document.getElementById('chat');
+    const thinkingDiv = document.createElement('div');
+    thinkingDiv.id = 'thinking-process';
+    thinkingDiv.classList.add('thinking-process');
+    
+    Object.values(aiThinkingSteps).forEach((step, index) => {
+        const stepDiv = document.createElement('div');
+        stepDiv.classList.add('thinking-step');
+        stepDiv.textContent = step;
+        thinkingDiv.appendChild(stepDiv);
+        
+        // Animate steps sequentially
+        setTimeout(() => {
+            stepDiv.classList.add('active');
+            // Mark previous step as complete
+            if (index > 0) {
+                thinkingDiv.children[index - 1].classList.add('complete');
+            }
+            chat.scrollTop = chat.scrollHeight;
+        }, index * 1000);
+    });
+    
+    chat.appendChild(thinkingDiv);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function removeThinkingProcess() {
+    const thinkingProcess = document.getElementById('thinking-process');
+    if (thinkingProcess) {
+        thinkingProcess.classList.add('removing');
+        setTimeout(() => {
+            thinkingProcess.remove();
+        }, 300); // Match the fadeOut animation duration
+    }
+}
+
+function detectIntent(message) {
+    const intents = {
+        question: /^(what|how|why|when|where|who|can you|could you)/i,
+        command: /^(make|create|generate|show|tell|give|find)/i,
+        statement: /^(i|this|that|it|there)/i,
+        greeting: /^(hi|hello|hey|greetings)/i
+    };
+
+    for (const [intent, pattern] of Object.entries(intents)) {
+        if (pattern.test(message)) return intent;
+    }
+    return 'unknown';
 }
 
 // Add model validation function
