@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="images/hexacola-logo.png" alt="HEXACOLA.AI Logo" width="200"/>
   <h1>🎨 HEXACOLA.AI</h1>
   <p>Next-Generation Creative AI Suite for Visual Storytelling</p>
 
@@ -59,13 +58,13 @@ HEXACOLA.AI is a comprehensive creative suite that empowers artists, filmmakers,
 
 ## 🚀 Live Demo
 
-Try HEXACOLA.AI: [Live Demo](https://yourusername.github.io/hexacola-ai)
+Try HEXACOLA.AI: [Live Demo](https://hexacola.github.io/hexacola.ai)
 
 ## 💻 Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/hexacola-ai.git
+git clone https://github.com/hexacola/hexacola.ai.git
 ```
 
 2. Navigate to project:
@@ -161,7 +160,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 Tauris - [@taurisblog](https://twitter.com/taurisblog) - taurisblog@gmail.com
 
-Project Link: [https://github.com/yourusername/hexacola-ai](https://github.com/yourusername/hexacola-ai)
+Project Link: [https://github.com/hexacola/hexacola.ai](https://github.com/hexacola/hexacola.ai)
 
 ## 🙏 Acknowledgments
 
@@ -180,5 +179,5 @@ Project Link: [https://github.com/yourusername/hexacola-ai](https://github.com/y
 ---
 
 <div align="center">
-  Made with ❤️ by <a href="https://github.com/yourusername">Tauris</a>
+  Made with ❤️ by <a href="https://github.com/hexacola">Tauris</a>
 </div>
