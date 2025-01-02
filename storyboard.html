@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Storyboard Generator - HEXACOLA AI</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <!-- Font Awesome with specific icons to reduce load -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+        integrity="sha512-iBBXm8fW90+nuLcSKVBs+I5c9BfVjjO+Z+5S3M3aoZrB+0jq/1elwY1KxV7R0z9Wsm1L8eZO8f6t5lTt1rY0hg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Google Fonts - Roboto -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+
+    <!-- External Libraries for PDF creation, image conversion, and ZIP archiving with defer -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"
+        integrity="sha512-Mc5bY2P+Vk3ZYSMxqZpwvVIXzX3Zl05e+l+K/4gVh0Tnm3k2kBQb29W1/DtWwxX16zCPGZRK5AD4Mw6x7EQ8xA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <a href="index.html" class="logo">
+            <i class="fas fa-cube"></i> HEXACOLA.AI
+        </a>
+        <nav class="main-nav">
+            <button id="homeBtn" aria-label="Go to home">
+                <i class="fas fa-home"></i> Home
+            </button>
+            <button id="generatorBtn" aria-label="Go to generator view">
+                <i class="fas fa-magic"></i> Generator
+            </button>
+            <button id="storyboardBtn" class="active" aria-label="Go to storyboard view">
+                <i class="fas fa-film"></i> Storyboard
+            </button>
+            <button onclick="navigateToScriptwriter()" aria-label="Go to scriptwriter">
+                <i class="fas fa-pen-fancy"></i> Scriptwriter
+            </button>
+            <button id="chatBtn" aria-label="Go to chat">
+                <i class="fas fa-comments"></i> Chat
+            </button>
+            <button id="darkModeToggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i> 🌙
+            </button>
+        </nav>
+    </header>
+
+    <div class="main-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar" aria-label="Storyboard Settings">
+            <!-- Overall Story -->
+            <div class="input-group">
+                <label for="scenarioInput">Overall Story:</label>
+                <textarea id="scenarioInput" placeholder="Write your story scenario here. Ensure every necessary detail is included..."
+                    aria-label="Overall Story"></textarea>
+            </div>
+
+            <!-- Style Selection -->
+            <div class="input-group">
+                <label for="styleSelection">Style:</label>
+                <select id="styleSelection" aria-label="Select a Style">
+                    <option value="None">None</option>
+                    <option value="Cinematic">Cinematic</option>
+                    <option value="Pixel Art">Pixel Art</option>
+                    <option value="Anime">Anime</option>
+                    <option value="Realistic">Realistic</option>
+                    <option value="Mix">Mix</option>
+                    <option value="Storyboard">Storyboard</option>
+                    <option value="Film Noir">Film Noir</option>
+                    <option value="Vintage">Vintage</option>
+                    <option value="Graphic Design">Graphic Design</option>
+                    <option value="Cartoon">Cartoon</option>
+                    <option value="Watercolor">Watercolor</option>
+                    <option value="Surrealism">Surrealism</option>
+                    <option value="Comics Style">Comics Style</option>
+                    <option value="Concept Art">Concept Art</option>
+                    <option value="Paper Cut-Out">Paper Cut-Out</option>
+                    <option value="AI Comics">AI Comics</option>
+                </select>
+            </div>
+
+            <!-- Text Model -->
+            <div class="input-group">
+                <label for="textModelSelection">Text Model:</label>
+                <select id="textModelSelection" aria-label="Select a Text Model">
+                    <option value="openai" selected>OpenAI</option>
+                    <option value="mistral-large">Mistral Large</option>
+                </select>
+            </div>
+
+            <!-- Image Model -->
+            <div class="input-group">
+                <label for="modelSelection">Image Model:</label>
+                <select id="modelSelection" aria-label="Select an Image Model">
+                    <!-- Corrected model name from "flux-cablyal" to "flux-cablyai" -->
+                    <option value="flux" selected>Flux</option>
+                    <option value="flux-anime">Flux Anime</option>
+                    <option value="flux-3d">Flux 3D</option>
+                    <option value="flux-pro">Flux Pro</option>
+                    <option value="flux-realism">Flux Realism</option>
+                    <option value="flux-cablyai">Flux Cablyai</option>
+                    <option value="any-dark">Any Dark</option>
+                    <option value="turbo">Turbo</option>
+                </select>
+            </div>
+
+            <!-- Color Palette Selector -->
+            <div class="input-group">
+                <label for="colorPaletteSelection">Color Palette:</label>
+                <select id="colorPaletteSelection" aria-label="Select a Color Palette">
+                    <option value="Default">Default</option>
+                    <option value="Monochrome">Monochrome</option>
+                    <option value="Pastel">Pastel</option>
+                    <option value="Neon">Neon</option>
+                    <option value="Warm">Warm</option>
+                    <option value="Cool">Cool</option>
+                </select>
+            </div>
+
+            <!-- Main Buttons: SAVE, PDF, ZIP, FRAME REORDER -->
+            <div class="buttons">
+                <button class="generate tooltip" id="saveBtn" aria-label="Save Storyboard" data-tooltip-text="Save current storyboard">
+                    <i class="fas fa-save"></i> SAVE
+                </button>
+                <button class="download tooltip" id="downloadPDFBtn" aria-label="Download as PDF" data-tooltip-text="Download storyboard as PDF">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+                <button class="download tooltip" id="downloadZIPBtn" aria-label="Download as ZIP" data-tooltip-text="Download storyboard as ZIP">
+                    <i class="fas fa-file-zipper"></i> ZIP
+                </button>
+            </div>
+            <!-- Frame Reordering (Drag-and-Drop) -->
+            <div class="buttons">
+                <button class="generate tooltip" id="reorderToggleBtn" aria-label="Toggle frame reorder mode" data-tooltip-text="Enable/disable frame reordering">
+                    <i class="fas fa-exchange-alt"></i> REORDER OFF
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" aria-label="Storyboard Main View">
+            <div id="storyboard-container" class="storyboard-container">
+                <div id="storyboard" class="storyboard">
+                    <div class="content-area">
+                        <div class="header buttons">
+                            <button class="generate tooltip" id="addFrameBtn" aria-label="Add Frame" data-tooltip-text="Add a new frame">
+                                <i class="fas fa-plus"></i> ADD FRAME
+                            </button>
+                            <h1>STORYBOARD</h1>
+                            <button class="generate tooltip" id="generateStoryboardBtn" aria-label="Generate storyboard" data-tooltip-text="Generate the Storyboard">
+                                <i class="fas fa-magic"></i> GENERATE STORYBOARD
+                            </button>
+                        </div>
+                        <div class="input-group">
+                            <!-- Frames Will Be Appended Here -->
+                            <div class="generated-image" id="storyboardFrames" aria-label="Storyboard Frames"></div>
+                        </div>
+                        <!-- Instructions -->
+                        <div class="instructions" style="margin: 20px;">
+                            <h2>How to Use:</h2>
+                            <ol>
+                                <li>Enter the overall story scenario in the "Overall Story" field on the left.</li>
+                                <li>Select your preferred style, text model, image model, and color palette.</li>
+                                <li>Add frames (up to 10).</li>
+                                <li>The AI will generate scene descriptions, emotions, and camera shots based on your inputs.</li>
+                                <li>Click "GENERATE STORYBOARD" to create images for each frame concurrently.</li>
+                                <li>If a frame isn't satisfactory, use the "REGENERATE FRAME" button to generate a new image for that frame.</li>
+                                <li>Use the "REORDER OFF" button to enable drag-and-drop mode for rearranging frames.</li>
+                                <li>Save your storyboard locally by clicking "SAVE". You can restore it later by reopening the page.</li>
+                                <li>Download your storyboard as a PDF or ZIP using the respective buttons.</li>
+                                <li>Toggle dark mode using the "🌙" button at the top.</li>
+                            </ol>
+                        </div>
+                        <!-- Live Story Preview -->
+                        <div class="story-preview" aria-label="Live Story Preview">
+                            <h2>Live Story Preview:</h2>
+                            <div id="liveStory" class="live-story"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Enlarged Images -->
+    <div id="imageModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalImage">
+        <span class="close" aria-label="Close modal">×</span>
+        <img class="modal-content" id="modalImage" alt="Enlarged Image" loading="lazy" />
+    </div>
+    <!-- Loading Overlay -->
+    <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="loading" aria-live="assertive">
+        <div class="loader"></div>
+        <div id="loading" class="loading-text">Preparing to create magic...</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div id="aiMessage" class="ai-message loading-message"></div>
+    </div>
+
+    <footer>
+        <p>
+            API Documentation:
+            <a href="https://github.com/pollinations/pollinations/blob/master/APIDOCS.md" target="_blank" rel="noopener noreferrer">Pollinations.AI</a>
+        </p>
+        <p>
+            © 2024 Tauris – HEXACOLA AI STORYBOARDER
+        </p>
+    </footer>
+
+    <!-- Main JavaScript with defer -->
+    <script defer>
+        /**********************************************************
+         * BASIC CONFIGURATIONS & GLOBAL STATE
+         **********************************************************/
+        const state = {
+            currentFrameCount: 0,
+            storyOutline: {},
+            reorderModeEnabled: false,
+            MAX_FRAMES: 10,
+            CONCURRENT_REQUESTS: 3, // Adjust based on API rate limits
+            liveStory: []
+        };
+
+        /**********************************************************
+         * Style Templates (for all styles)
+         **********************************************************/
+        const styleTemplates = {
+            "None": {
+                description: "no specific style, plain and unstyled",
+                negativePrompt: "avoid any complex details or artistic elements"
+            },
+            "Pixel Art": {
+                description: "pixel art style, low resolution, blocky 8-bit aesthetic",
+                negativePrompt: "avoid high resolution, realistic details, or smooth gradients"
+            },
+            "Cinematic": {
+                description: "cinematic style, dramatic lighting, filmic color grading",
+                negativePrompt: "avoid flat lighting, dull colors, or lack of depth"
+            },
+            "Anime": {
+                description: "anime style, clean lines, vivid colors, stylized characters",
+                negativePrompt: "avoid rough or sketchy lines, muted colors, or overly realistic proportions"
+            },
+            "Realistic": {
+                description: "highly detailed, photorealistic style",
+                negativePrompt: "avoid cartoonish elements, exaggerated proportions, or low detail"
+            },
+            "Mix": {
+                description: "a creative mix of multiple art styles",
+                negativePrompt: "avoid overly uniform or single-style elements"
+            },
+            "Storyboard": {
+                description: "simple storyboard style, hand-drawn sketches, AI-generated comic style, AI-drawn lines, simple shading",
+                negativePrompt: "avoid detailed rendering, complex lighting, or polished finishes"
+            },
+            "Film Noir": {
+                description: "black and white film noir style, high contrast shadows",
+                negativePrompt: "avoid colors, soft shadows, or bright, cheerful tones"
+            },
+            "Vintage": {
+                description: "vintage style, faded colors, old photographic look",
+                negativePrompt: "avoid modern or saturated colors, sharp digital aesthetics"
+            },
+            "Graphic Design": {
+                description: "bold graphic style, flat shapes, geometric patterns",
+                negativePrompt: "avoid gradients, fine details, or textured elements"
+            },
+            "Cartoon": {
+                description: "cartoon style, bold outlines, vibrant palette",
+                negativePrompt: "avoid muted tones, realistic textures, or detailed rendering"
+            },
+            "Watercolor": {
+                description: "soft watercolor style, pastel tones, brushstroke textures",
+                negativePrompt: "avoid hard edges, solid fills, or digital precision"
+            },
+            "Surrealism": {
+                description: "dreamlike surrealist style, unexpected juxtapositions",
+                negativePrompt: "avoid logical or realistic compositions, mundane details"
+            },
+            "Comics Style": {
+                description: "comic book style, halftone shading, action lines",
+                negativePrompt: "avoid photorealistic elements, soft shadows, or muted tones"
+            },
+            "Concept Art": {
+                description: "concept art style, detailed environment, imaginative design",
+                negativePrompt: "avoid lack of detail, overly simple designs, or mundane environments"
+            },
+            "Paper Cut-Out": {
+                description: "paper cut-out style, layered colored paper effect",
+                negativePrompt: "avoid realistic textures, smooth gradients, or overly detailed elements"
+            },
+            "AI Comics": {
+                description: "AI-generated comic style, AI-drawn lines, digital shading",
+                negativePrompt: "avoid traditional hand-drawn looks, rough sketches, or low resolution"
+            }
+        };
+
+        /**********************************************************
+         * UTIL FUNCTIONS - API CALLS, PROMPT GENERATION, ETC.
+         **********************************************************/
+        const apiEndpoints = {
+            textGeneration: "https://text.pollinations.ai/openai",
+            imageGeneration: "https://image.pollinations.ai/prompt/"
+        };
+
+        /**
+         * Gets the selected text model.
+         */
+        function getSelectedTextModel() {
+            return document.getElementById("textModelSelection").value;
+        }
+
+        /**
+         * Gets the selected image model.
+         */
+        function getSelectedImageModel() {
+            return document.getElementById("modelSelection").value;
+        }
+
+        /**
+         * Retrieves additional options (hard-coded as per user request).
+         * Ensures nologo=true, safe=false, and enhance=true for all models.
+         */
+        function getAdditionalOptions() {
+            return {
+                nologo: true,      // Always on
+                enhance: true,     // Always on
+                safe: false        // NSFW Filtering OFF (safe=false)
+            };
+        }
+
+        /**
+         * Prepares a prompt by adding style parameters.
+         */
+        function buildPromptWithStyle(basePrompt, styleKey) {
+            const styleInfo = styleTemplates[styleKey];
+            if (!styleInfo || !styleInfo.description) {
+                return basePrompt;
+            }
+            return `${basePrompt}, strictly maintain ${styleKey} style throughout - ${styleInfo.description}, ensure consistency with other frames`;
+        }
+
+        /**
+         * Calls the OpenAI-compatible Text Generation API.
+         * @param {string} userMessage - The message to send to the AI.
+         * @returns {object|null} - Parsed JSON response or null on failure.
+         */
+        async function callOpenAIAPI(userMessage) {
+            try {
+                const chosenModel = getSelectedTextModel();
+                const response = await fetch(apiEndpoints.textGeneration, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: "system",
+                                content:
+                                    "You produce strictly valid JSON with keys and string values only. No code blocks. The JSON must have exactly the requested keys. Each response must reflect chosen style, maintain identical character/location details, differ each frame in camera, emotion, action, and include dialogues where appropriate. Return only the requested fields."
+                            },
+                            { role: "user", content: userMessage }
+                        ],
+                        model: chosenModel,
+                        seed: Math.floor(Math.random() * 100000),
+                        jsonMode: true
+                    })
+                });
+
+                if (!response.ok) {
+                    console.error("API error:", response.status, response.statusText);
+                    alert(`API Error: ${response.status} ${response.statusText}`);
+                    return null;
+                }
+
+                const data = await response.json();
+                if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+                    let content = data.choices[0].message.content.trim();
+                    content = content.replace(/```json|```/g, "").trim();
+                    try {
+                        return JSON.parse(content);
+                    } catch (e) {
+                        console.error("JSON parse error:", e, "JSON content was:", content);
+                        alert("Error processing AI response. Please try again.");
+                        return null;
+                    }
+                }
+                return null;
+            } catch (err) {
+                console.error("Fetch error:", err);
+                alert("Network error. Please check your connection and try again.");
+                return null;
+            }
+        }
+
+        /**
+         * Calls the Image Generation API.
+         * Ensures nologo=true, safe=false, and enhance=true are always applied.
+         * @param {string} prompt - The image generation prompt.
+         * @param {object} options - Additional options for image generation.
+         * @returns {string|null} - Object URL of the generated image or null on failure.
+         */
+        async function callImageGenerationAPI(prompt, options = {}) {
+            try {
+                const {
+                    model = 'flux',
+                    seed = Math.floor(Math.random() * 100000),
+                    width = 1024,
+                    height = 1024,
+                    nologo = true,      // Ensured to be true
+                    privateImage = false,
+                    enhance = true,     // Ensured to be true
+                    safe = false        // Ensured to be false
+                } = options;
+
+                const encodedPrompt = encodeURIComponent(prompt);
+                const url = `${apiEndpoints.imageGeneration}${encodedPrompt}?model=${model}&seed=${seed}&width=${width}&height=${height}&nologo=${nologo}&private=${privateImage}&enhance=${enhance}&safe=${safe}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Failed to fetch image from the API.");
+                const blob = await response.blob();
+                return URL.createObjectURL(blob);
+            } catch (error) {
+                console.error(error);
+                alert("Error generating image. Please try again.");
+                return null;
+            }
+
+        }
+
+        /**
+         * Builds the AI prompt incorporating style and user inputs.
+         * @param {number} frameNumber - The frame number.
+         * @returns {string} - The constructed prompt.
+         */
+        function buildAIPrompt(frameNumber) {
+            const scenario = document.getElementById("scenarioInput").value.trim();
+            const style = document.getElementById("styleSelection").value;
+            const charactersInput = document.getElementById(`characters-${frameNumber}`).value.trim();
+            const location = document.getElementById(`location-${frameNumber}`).value.trim() || "";
+            const colorPalette = document.getElementById("colorPaletteSelection").value;
+
+            // Handle multiple characters with clear positioning
+            const characters = charactersInput ? charactersInput.split(",").map(char => char.trim()) : [];
+            let characterDescriptions = "";
+            if (characters.length > 0) {
+                characters.forEach((char, index) => {
+                    characterDescriptions += `CHARACTER ${index + 1}: ${char.toLowerCase()} - Must be clearly visible in the frame when mentioned in the action.\n`;
+                });
+                if (state.liveStory.length === 0) {
+                    state.liveStory = [...characters];
+                }
+            }
+
+            // Style and color guidance
+            const styleDescription = styleTemplates[style]?.description || "";
+            const colorNote = colorPalette && colorPalette !== "Default" ?
+                `Use a ${colorPalette.toLowerCase()} color palette for visual consistency.` : "";
+
+            // Frame plot from story outline with single-action focus
+            const framePlot = state.storyOutline[`frame${frameNumber}`]?.action_description ||
+                "This frame continues the story with a single, clear action.";
+
+            // Camera descriptions refined for better image composition
+            const cameraDescriptions = {
+                "Dutch Angle": {
+                    description: "tilted camera angle creating dramatic tension",
+                    prompt: "camera tilted at a diagonal angle, creating unease and visual tension"
+                },
+                "Establishing Shot": {
+                    description: "wide establishing shot showing the entire scene clearly",
+                    prompt: "wide angle view capturing the entire environment and setting"
+                },
+                "Medium Shot": {
+                    description: "medium shot from waist up, centered on the main subject",
+                    prompt: "framed from waist up, showing clear character expressions and body language"
+                },
+                "Close-Up": {
+                    description: "close-up shot focusing on the main subject's face or key detail",
+                    prompt: "tight frame on face or important detail, emphasizing emotion or significance"
+                },
+                "Over-the-Shoulder": {
+                    description: "camera positioned behind one character looking at another",
+                    prompt: "view from behind one character's shoulder, focusing on the other character"
+                },
+                "Long Shot": {
+                    description: "full body shot showing character and environment relationship",
+                    prompt: "full body view with surrounding environment visible"
+                },
+                "High Angle": {
+                    description: "camera looking down from above, subject appears smaller or vulnerable",
+                    prompt: "view from above looking down at the subject"
+                },
+                "Low Angle": {
+                    description: "camera looking up from below, subject appears dominant or powerful",
+                    prompt: "view from below looking up at the subject"
+                },
+                "Tracking Shot": {
+                    description: "smooth camera movement following the subject",
+                    prompt: "following the subject in motion, maintaining clear focus"
+                },
+                "Crane Shot": {
+                    description: "vertical camera movement from high to low or vice versa",
+                    prompt: "sweeping vertical perspective shift"
+                },
+                "Wide Shot": {
+                    description: "expansive view capturing entire location and all subjects",
+                    prompt: "broad view encompassing the entire scene"
+                },
+                "Extreme Close-Up": {
+                    description: "very tight shot on specific detail or expression",
+                    prompt: "intense focus on a single detail or expression"
+                },
+                "Point of View": {
+                    description: "shot from character's perspective showing what they see",
+                    prompt: "first-person perspective from character's viewpoint"
+                },
+                "Two Shot": {
+                    description: "framing two characters together in meaningful composition",
+                    prompt: "balanced frame showing two characters in relation to each other"
+                },
+                "Master Shot": {
+                    description: "single shot capturing entire scene and all key elements",
+                    prompt: "comprehensive view of all scene elements and action"
+                }
+            };
+
+            const randomCamera = Object.keys(cameraDescriptions)[
+                Math.floor(Math.random() * Object.keys(cameraDescriptions).length)
+            ];
+            const selectedCamera = cameraDescriptions[randomCamera] || {
+                description: "natural angle",
+                prompt: "standard eye-level view"
+            };
+
+            // Use in the prompt building:
+            const cameraDesc = `${selectedCamera.description} (${selectedCamera.prompt})`;
+
+            // Final AI prompt with emphasis on single-action clarity
+            const prompt = `
+Create a visually clear scene description for image generation. Focus on a SINGLE main action or moment.
+Return strictly valid JSON with these keys: "emotion", "characters", "location", "camera", "action", "prompt", "narration".
+
+KEY REQUIREMENTS:
+1. SINGLE ACTION FOCUS: Describe only ONE main action or moment that can be captured in a single image.
+2. CLEAR CHARACTER POSITIONING: When multiple characters are present, specify their relative positions.
+3. VISUAL CLARITY: All described elements must be visible in a single frame.
+
+SCENE DETAILS:
+${characterDescriptions}
+LOCATION: ${location}
+STYLE: ${style} - ${styleDescription}
+${colorNote}
+
+COMPOSITION GUIDELINES:
+1. Main Action: Choose ONE clear, describable moment
+2. Character Placement: Specify where each character is positioned
+3. Background Elements: Include only visible, relevant details
+4. Lighting/Atmosphere: Describe the overall mood and lighting
+5. Camera Angle: ${cameraDesc}
+
+IMPORTANT RULES:
+- NO sequential actions (avoid "then" or multiple actions)
+- NO invisible elements or implied actions
+- NO abstract concepts that can't be visualized
+- ENSURE all mentioned characters are visible
+- MAINTAIN style consistency
+
+Example Good Format:
+{
+    "emotion": "Determined",
+    "characters": "Sarah, Tom",
+    "location": "Sunlit kitchen",
+    "camera": "Medium shot",
+    "action": "Sarah reaches for a cookie jar while Tom watches from the doorway",
+    "prompt": "A sunlit kitchen scene with Sarah reaching up to a high shelf where a cookie jar sits, while Tom leans against the doorframe, afternoon light streaming through the window",
+    "narration": "INT. Kitchen - Afternoon: Sarah's determined reach for the cookie jar draws Tom's attention."
+}
+
+Frame ${frameNumber} Initial Context: "${framePlot}"
+
+Ensure the scene description captures a single, clear moment that can be effectively generated as one image.
+`;
+
+            return prompt;
+        }
+
+        /**********************************************************
+         * STORY NARRATION STRUCTURE
+         **********************************************************/
+        /**
+         * Generates the story outline based on the scenario and number of frames.
+         * @param {string} scenario - The overall story scenario.
+         * @param {number} framesCount - Number of frames to generate.
+         * @returns {object|null} - The story outline or null on failure.
+         */
+        async function generateStoryOutline(scenario, framesCount) {
+            const promptForAPI = `
+Create a detailed and concise story outline with exactly ${framesCount} frames.
+Scenario: "${scenario}"
+
+For each frame, provide the following JSON structure, ensuring consistency in formatting and descriptions:
+{
+    "outline": {
+        "frame1": {
+            "scene_heading": "", // INT./EXT. and location, time of day
+            "camera_shot": "", // Type of shot: close-up, wide, etc.
+            "action_description": "", // Character actions or movements
+            "dialogue": "", // Key dialogue (if any)
+            "emotional_tone": "", // Emotional tone for the frame
+            "background_elements": "" // Key background elements visible in the scene
+        }
+        // repeat for each frame up to ${framesCount}
+    }
+}
+
+### Guidelines:
+1. **Scene Heading**: Begin each frame with INT./EXT. followed by the location and time of day.
+2. **Camera Shot**: Specify the type of shot (e.g., close-up, wide shot, tracking).
+3. **Action Description**: Briefly describe key character actions or movements using simple, active language.
+4. **Dialogue**: Include short, relevant dialogue if applicable (max 50 characters).
+5. **Emotional Tone**: Clearly state the emotional tone (e.g., tense, joyous, somber).
+6. **Background Elements**: Highlight key visual elements in the background, focusing on diversity and richness for AI image generation.
+7. **Consistency**: Ensure all descriptions align with the scenario and are under 50 characters.
+8. **AI-Friendly Formatting**: Return a fully formatted JSON response.
+
+### Example Format:
+{
+    "outline": {
+        "frame1": {
+            "scene_heading": "EXT. Park - Day",
+            "camera_shot": "Wide shot",
+            "action_description": "A child runs towards a fountain.",
+            "dialogue": "Catch me if you can!",
+            "emotional_tone": "Playful",
+            "background_elements": "Trees, benches, pigeons"
+        },
+        "frame2": {
+            "scene_heading": "INT. Kitchen - Evening",
+            "camera_shot": "Close-up",
+            "action_description": "A chef chops vegetables rapidly.",
+            "dialogue": "",
+            "emotional_tone": "Focused",
+            "background_elements": "Counters, spices, cutting board"
+        }
+        // repeat for additional frames
+    }
+}
+
+Keep the descriptions short, vivid, and visually descriptive to ensure alignment with AI image generation. 
+Each frame should clearly progress the story while maintaining consistency in tone and detail.
+`;
+
+            try {
+                const response = await callOpenAIAPI(promptForAPI);
+                if (response && response.outline && typeof response.outline === "object") {
+                    return response;
+                } else {
+                    throw new Error("Failed to generate story outline.");
+                }
+            } catch (error) {
+                console.error("Story outline generation error:", error);
+                // Use a simpler fallback structure if the main one fails
+                const fallbackOutline = {
+                    outline: {}
+                };
+                for (let i = 1; i <= framesCount; i++) {
+                    fallbackOutline.outline[`frame${i}`] = {
+                        scene_heading: "SCENE",
+                        camera_shot: "MEDIUM SHOT",
+                        action_description: `Frame ${i} action`,
+                        dialogue: "",
+                        emotional_tone: "Neutral",
+                        background_elements: "Generic background"
+                    };
+                }
+                return fallbackOutline;
+            }
+        }
+
+        /**********************************************************
+         * FRAME DETAILS GENERATION
+         **********************************************************/
+        /**
+         * Generates frame details including narration.
+         * @param {number} frameNumber - The frame number.
+         * @returns {object|null} - The frame data or null on failure.
+         */
+        async function generateFrameWithNarration(frameNumber) {
+            const prompt = buildAIPrompt(frameNumber);
+            if (!prompt) {
+                alert(`Missing prompt for frame ${frameNumber}.`);
+                return null;
+            }
+            const frameData = await callOpenAIAPI(prompt);
+            return frameData;
+        }
+
+        /**********************************************************
+         * FILL & GENERATE
+         **********************************************************/
+        function fillFrameWithDetails(n, details) {
+            if (!details) {
+                console.error(`No data received for frame ${n}`);
+                document.getElementById("aiMessage").textContent = `Error: No data received for frame ${n}`;
+                return;
+            }
+
+            const requiredKeys = ["narration", "emotion", "characters", "location", "camera", "action", "prompt"];
+            const missingKeys = requiredKeys.filter(k => !details.hasOwnProperty(k) || !details[k]);
+
+            if (missingKeys.length > 0) {
+                console.error(`Incomplete data for frame ${n}. Missing: ${missingKeys.join(', ')}`, details);
+                document.getElementById("aiMessage").textContent =
+                    `Frame ${n} is missing required data: ${missingKeys.join(', ')}. Trying to recover...`;
+
+                // Attempt to recover by filling in missing fields with defaults
+                missingKeys.forEach(key => {
+                    details[key] = details[key] || `Default ${key}`;
+                });
+            }
+
+            try {
+                document.getElementById(`characters-${n}`).value = details.characters;
+                document.getElementById(`location-${n}`).value = details.location;
+
+                let finalPrompt = details.prompt;
+                if (details.action && details.action !== "unknown action") {
+                    finalPrompt += " [Action: " + details.action + "]";
+                }
+                document.getElementById(`prompt-${n}`).value = finalPrompt;
+
+                const narrationDiv = document.getElementById(`narration-${n}`);
+                narrationDiv.textContent = details.narration;
+                narrationDiv.parentElement.style.display = "block";
+
+                // Update Live Story Preview
+                updateLiveStory(n, details);
+
+            } catch (error) {
+                console.error(`Error filling frame ${n} details:`, error);
+                document.getElementById("aiMessage").textContent =
+                    `Error updating frame ${n}. Please try regenerating this frame.`;
+            }
+        }
+
+        /**********************************************************
+         * GENERATE STORYBOARD
+         **********************************************************/
+        /**
+         * Generates the entire storyboard by creating outline, frame details, and images.
+         */
+        async function generateStoryboard() {
+            const scenario = document.getElementById("scenarioInput").value.trim();
+            if (!scenario) {
+                alert("Please enter a scenario.");
+                return;
+            }
+            if (state.currentFrameCount === 0) {
+                alert("Please add at least one frame.");
+                return;
+            }
+
+            // Disable controls during generation
+            toggleControls(false);
+
+            // Show loading overlay and AI message
+            document.getElementById("overlay").style.display = "flex";
+            updateProgressBar(0);
+
+            // Show random start message
+            const startMessage = getLoadingMessage('start');
+            document.getElementById("aiMessage").textContent = startMessage;
+
+            try {
+                // Generate story outline
+                state.storyOutline = {};
+                const outlineData = await generateStoryOutline(scenario, state.currentFrameCount);
+                if (outlineData && outlineData.outline && typeof outlineData.outline === "object") {
+                    state.storyOutline = outlineData.outline;
+                } else {
+                    throw new Error("Failed to generate story outline.");
+                }
+
+                // Generate text details for each frame sequentially
+                for (let i = 1; i <= state.currentFrameCount; i++) {
+                    // Select random frame message and replace {n} with frame number
+                    const frameMsg = getLoadingMessage('frame', i);
+                    document.getElementById("aiMessage").textContent = frameMsg;
+
+                    const details = await generateFrameWithNarration(i);
+                    if (details) {
+                        fillFrameWithDetails(i, details);
+                    } else {
+                        console.error(`Failed to get data for frame ${i}.`);
+                        alert(`Failed to get data for frame ${i}. Please try regenerating this frame.`);
+                    }
+                    updateProgressBar((i / state.currentFrameCount) * 50); // Half progress for text generation
+                }
+
+                // Show random finish message during image generation
+                const finishMessage = getLoadingMessage('finish');
+                document.getElementById("aiMessage").textContent = finishMessage;
+
+                // Generate images for each frame with controlled concurrency
+                const imageModel = getSelectedImageModel();
+                const additionalOptions = getAdditionalOptions();
+                const frameNumbers = Array.from({ length: state.currentFrameCount }, (_, i) => i + 1);
+                let completed = 0;
+
+                // Function to process frames with concurrency limit
+                async function processFramesConcurrently(frames, limit) {
+                    const queue = [...frames];
+                    const promises = [];
+
+                    const execute = async () => {
+                        if (queue.length === 0) return;
+                        const frameNumber = queue.shift();
+                        const frame = document.getElementById(`frame-${frameNumber}`);
+                        const basePrompt = document.getElementById(`prompt-${frameNumber}`).value.trim();
+                        const styleKey = frame.getAttribute("data-style");
+                        const aspect = document.getElementById(`aspectRatio-${frameNumber}`).value;
+                        const imgEl = document.getElementById(`image-${frameNumber}`);
+                        let [w, h] = getDimensionsFromAspect(aspect);
+
+                        // Skip image generation if already present
+                        if (imgEl.src && imgEl.src !== "#" && imgEl.style.display === "block") {
+                            completed++;
+                            updateProgressBar(50 + (completed / state.currentFrameCount) * 50);
+                            return;
+                        }
+
+                        let finalPrompt = buildPromptWithStyle(basePrompt, styleKey);
+
+                        try {
+                            const imgUrl = await callImageGenerationAPI(finalPrompt, {
+                                model: imageModel,
+                                seed: Math.floor(Math.random() * 100000),
+                                width: w,
+                                height: h,
+                                nologo: additionalOptions.nologo,
+                                privateImage: false,
+                                enhance: additionalOptions.enhance,
+                                safe: additionalOptions.safe
+                            });
+                            if (imgUrl) {
+                                imgEl.src = imgUrl;
+                                imgEl.style.display = "block";
+                            }
+                        } catch (err) {
+                            console.error(`Failed to generate image for frame ${frameNumber}:`, err);
+                            alert(`Failed to generate image for frame ${frameNumber}. Please try regenerating this frame.`);
+                        }
+
+                        completed++;
+                        updateProgressBar(50 + (completed / state.currentFrameCount) * 50);
+                        await execute(); // Proceed to next frame
+                    };
+
+                    // Initialize concurrent executions
+                    for (let i = 0; i < limit; i++) {
+                        promises.push(execute());
+                    }
+
+                    await Promise.all(promises);
+                }
+
+                await processFramesConcurrently(frameNumbers, state.CONCURRENT_REQUESTS);
+
+                // Finalize
+                document.getElementById("aiMessage").textContent = "✨ Your storyboard is ready!";
+                setTimeout(() => {
+                    document.getElementById("overlay").style.display = "none";
+                    alert("Storyboard generated successfully!");
+                    // Re-enable controls
+                    toggleControls(true);
+                }, 1000);
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById("aiMessage").textContent = getLoadingMessage('error');
+                alert(error.message || "An error occurred during storyboard generation.");
+                document.getElementById("overlay").style.display = "none";
+                toggleControls(true);
+            }
+        }
+
+        /**********************************************************
+         * FRAME REGENERATION
+         **********************************************************/
+        /**
+         * Regenerates a specific frame's image.
+         * @param {number} n - The frame number.
+         */
+        async function regenerateFrame(n) {
+            const scenario = document.getElementById("scenarioInput").value.trim();
+            if (!scenario) {
+                alert("Please enter a scenario before regenerating a frame.");
+                return;
+            }
+
+            // Regenerate image
+            const basePrompt = document.getElementById(`prompt-${n}`).value.trim();
+            if (!basePrompt) {
+                alert(`Missing prompt for frame ${n}.`);
+                return;
+            }
+
+            const frame = document.getElementById(`frame-${n}`);
+            const styleKey = frame.getAttribute("data-style");
+            const imageModel = getSelectedImageModel();
+            const aspect = document.getElementById(`aspectRatio-${n}`).value;
+            let [w, h] = getDimensionsFromAspect(aspect);
+            const additionalOptions = getAdditionalOptions();
+
+            const imgEl = document.getElementById(`image-${n}`);
+            imgEl.style.display = "none";
+
+            // Show loading overlay and update AI message
+            document.getElementById("overlay").style.display = "flex";
+            updateProgressBar(0);
+            document.getElementById("aiMessage").textContent = `Regenerating Frame ${n}...`;
+
+            let finalPrompt = buildPromptWithStyle(basePrompt, styleKey);
+
+            try {
+                const imgUrl = await callImageGenerationAPI(finalPrompt, {
+                    model: imageModel,
+                    seed: Math.floor(Math.random() * 100000),
+                    width: w,
+                    height: h,
+                    nologo: additionalOptions.nologo,
+                    privateImage: false,
+                    enhance: additionalOptions.enhance,
+                    safe: additionalOptions.safe
+                });
+                if (imgUrl) {
+                    imgEl.src = imgUrl;
+                    imgEl.style.display = "block";
+                    alert(`Frame ${n} successfully regenerated!`);
+                }
+                updateProgressBar(100);
+            } catch (e) {
+                console.error(`Failed to regenerate image for frame ${n}:`, e);
+                alert(`Failed to regenerate image for frame ${n}. Please try again.`);
+            }
+
+            // Hide loading overlay after a short delay
+            setTimeout(() => {
+                document.getElementById("overlay").style.display = "none";
+            }, 500);
+        }
+
+        /**********************************************************
+         * HELPER: Dimensions by Aspect Ratio
+         **********************************************************/
+        /**
+         * Returns image dimensions based on aspect ratio.
+         * @param {string} aspect - The aspect ratio.
+         * @returns {number[]} - Width and height.
+         */
+        function getDimensionsFromAspect(aspect) {
+            switch (aspect) {
+                case "16:9":
+                    return [1920, 1080];
+                case "4:3":
+                    return [1600, 1200];
+                case "9:16":
+                    return [1080, 1920];
+                case "1:1":
+                    return [1080, 1080];
+                default:
+                    return [1024, 1024];
+            }
+        }
+
+        /**
+         * Updates the progress bar.
+         * @param {number} pct - Percentage to fill.
+         */
+        function updateProgressBar(pct) {
+            document.getElementById("progressBar").style.width = `${pct}%`;
+        }
+
+        /**********************************************************
+         * FRAME CREATION / REMOVAL
+         **********************************************************/
+        /**
+         * Adds a new frame to the storyboard.
+         */
+        function addFrame() {
+            if (state.currentFrameCount >= state.MAX_FRAMES) {
+                alert(`Maximum number of frames (${state.MAX_FRAMES}) reached. Please remove some frames before adding more.`);
+                return;
+            }
+            state.currentFrameCount++;
+            const framesContainer = document.getElementById("storyboardFrames");
+            const frame = document.createElement("div");
+            frame.classList.add("image-container");
+            frame.setAttribute("id", `frame-${state.currentFrameCount}`);
+            frame.setAttribute("draggable", "false");
+            frame.setAttribute("data-style", document.getElementById("styleSelection").value);
+
+            frame.innerHTML = `
+                <div class="frame-header">
+                    <h3>Frame ${state.currentFrameCount}</h3>
+                    <button class="remove-frame-btn tooltip" aria-label="Remove frame" data-tooltip-text="Remove frame">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                <div class="input-group">
+                    <label for="characters-${state.currentFrameCount}">Characters:</label>
+                    <textarea id="characters-${state.currentFrameCount}" placeholder="Describe characters in this frame..." rows="2" aria-label="Characters"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="location-${state.currentFrameCount}">Location:</label>
+                    <input type="text" id="location-${state.currentFrameCount}" placeholder="Specific location..." aria-label="Location" />
+                </div>
+                <div class="input-group">
+                    <label for="aspectRatio-${state.currentFrameCount}">Aspect Ratio:</label>
+                    <select id="aspectRatio-${state.currentFrameCount}" aria-label="Select an Aspect ratio">
+                        <option value="16:9">16:9</option>
+                        <option value="4:3">4:3</option>
+                        <option value="9:16">9:16</option>
+                        <option value="1:1">1:1</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Generated Image:</label>
+                    <img id="image-${state.currentFrameCount}" src="#" alt="Generated image" loading="lazy" style="display:none; cursor:pointer;" aria-label="Generated Image" />
+                </div>
+                <div class="input-group narration-group" style="margin-top:10px; display:none;">
+                    <label>Scene:</label>
+                    <div class="narration-text" id="narration-${state.currentFrameCount}" style="font-style:italic;" aria-live="polite" aria-label="Scene Narration"></div>
+                </div>
+                <input type="hidden" id="prompt-${state.currentFrameCount}" />
+                <button class="generate tooltip regenerate-frame-btn" style="margin-top:10px;" aria-label="Regenerate frame" data-tooltip-text="Regenerate current frame">
+                    <i class="fas fa-sync-alt"></i> REGENERATE FRAME
+                </button>
+            `;
+
+            framesContainer.appendChild(frame);
+
+            // Attach event listeners to the newly added frame
+            attachFrameEventListeners(state.currentFrameCount);
+        }
+
+        /**
+         * Removes a specific frame from the storyboard.
+         * @param {number} num - The frame number to remove.
+         */
+        function removeFrame(num) {
+            const frame = document.getElementById(`frame-${num}`);
+            if (frame) {
+                frame.remove();
+                state.currentFrameCount--;
+                reindexFrames();
+            }
+        }
+
+        /**
+         * Attaches event listeners to frame-specific buttons.
+         * @param {number} frameNumber - The frame number.
+         */
+        function attachFrameEventListeners(frameNumber) {
+            const frame = document.getElementById(`frame-${frameNumber}`);
+            if (frame) {
+                // Remove Frame Button
+                const removeBtn = frame.querySelector(".remove-frame-btn");
+                removeBtn.addEventListener("click", () => removeFrame(frameNumber));
+
+                // Regenerate Frame Button
+                const regenBtn = frame.querySelector(".regenerate-frame-btn");
+                regenBtn.addEventListener("click", () => regenerateFrame(frameNumber));
+
+                // Generated Image Click
+                const imgEl = frame.querySelector("img");
+                imgEl.addEventListener("click", () => openModal(frameNumber));
+
+                // Prevent image download
+                imgEl.addEventListener("contextmenu", (e) => e.preventDefault());
+            }
+        }
+
+        /**********************************************************
+         * SAVE & LOAD FROM LOCALSTORAGE
+         **********************************************************/
+        /**
+         * Saves the current storyboard to localStorage.
+         */
+        function saveStoryboard() {
+            const storyboard = [];
+            for (let i = 1; i <= state.currentFrameCount; i++) {
+                const frm = document.getElementById(`frame-${i}`);
+                if (frm) {
+                    const imgEl = frm.querySelector("img");
+                    const image = imgEl ? imgEl.src : "";
+                    const characters = frm.querySelector(`#characters-${i}`).value.trim();
+                    const location = frm.querySelector(`#location-${i}`).value.trim();
+                    const fullPrompt = frm.querySelector(`#prompt-${i}`).value.trim();
+                    const style = frm.getAttribute("data-style");
+                    const aspect = frm.querySelector(`#aspectRatio-${i}`).value;
+                    const narration = frm.querySelector(`#narration-${i}`)?.textContent.trim() || "";
+
+                    let action = "unknown action";
+                    let purePrompt = fullPrompt;
+                    const actionMatch = fullPrompt.match(/\[Action:\s*(.*?)\]/);
+                    if (actionMatch && actionMatch[1]) {
+                        action = actionMatch[1];
+                        purePrompt = fullPrompt.replace(/\[Action:.*?\]/, "").trim();
+                    }
+
+                    storyboard.push({
+                        image,
+                        characters,
+                        location,
+                        prompt: purePrompt,
+                        action,
+                        aspectRatio: aspect,
+                        style,
+                        narration
+                    });
+                }
+            }
+            // Save storyboard data only
+            const fullData = {
+                storyboard
+            };
+            localStorage.setItem("storyboard", JSON.stringify(fullData));
+            alert("Storyboard saved successfully!");
+        }
+
+        /**
+         * Loads the storyboard from localStorage.
+         */
+        function loadStoryboard() {
+            const savedData = localStorage.getItem("storyboard");
+            if (!savedData) return;
+            const parsed = JSON.parse(savedData);
+            const saved = parsed.storyboard || [];
+
+            // Restore frames
+            if (saved.length > 0) {
+                saved.forEach((fr, i) => {
+                    addFrame();
+                    const n = i + 1;
+                    document.getElementById(`characters-${n}`).value = fr.characters;
+                    document.getElementById(`location-${n}`).value = fr.location;
+
+                    let reconstructedPrompt = fr.prompt;
+                    if (fr.action && fr.action !== "unknown action") {
+                        reconstructedPrompt += " [Action: " + fr.action + "]";
+                    }
+                    document.getElementById(`prompt-${n}`).value = reconstructedPrompt;
+                    document.getElementById(`aspectRatio-${n}`).value = fr.aspectRatio || "16:9";
+
+                    const frame = document.getElementById(`frame-${n}`);
+                    if (fr.style) {
+                        frame.setAttribute("data-style", fr.style);
+                    }
+                    if (fr.image && fr.image !== "#") {
+                        const img = document.getElementById(`image-${n}`);
+                        img.src = fr.image;
+                        img.style.display = "block";
+                    }
+                    if (fr.narration) {
+                        const narrationDiv = document.getElementById(`narration-${n}`);
+                        narrationDiv.textContent = fr.narration;
+                        narrationDiv.parentElement.style.display = "block";
+                    }
+                });
+            }
+
+            // Update Live Story Preview
+            renderLiveStory();
+        }
+
+        /**********************************************************
+         * PDF & ZIP DOWNLOAD
+         **********************************************************/
+        /**
+         * Downloads the storyboard as a PDF.
+         */
+        async function downloadStoryboardPDF() {
+            const { jsPDF } = window.jspdf;
+            if (state.currentFrameCount === 0) {
+                alert("No frames to download.");
+                return;
+            }
+
+            const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+            let y = 10;
+            const pageWidth = pdf.internal.pageSize.getWidth() - 20;
+
+            for (let i = 1; i <= state.currentFrameCount; i++) {
+                const frm = document.getElementById(`frame-${i}`);
+                if (frm) {
+                    try {
+                        const imgElement = frm.querySelector("img");
+                        const narrationElement = frm.querySelector(".narration-text");
+                        if (imgElement && imgElement.src && imgElement.src !== "#") {
+                            const imgData = await fetchImageData(imgElement.src);
+
+                            const imgProps = pdf.getImageProperties(imgData);
+                            const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
+
+                            if (y + imgHeight + 20 > pdf.internal.pageSize.getHeight()) {
+                                pdf.addPage();
+                                y = 10;
+                            }
+                            pdf.addImage(imgData, "PNG", 10, y, pageWidth, imgHeight);
+                            y += imgHeight + 5;
+
+                            if (narrationElement && narrationElement.textContent) {
+                                pdf.setFontSize(10);
+                                const textLines = pdf.splitTextToSize(narrationElement.textContent, pageWidth);
+                                pdf.text(textLines, 10, y);
+                                y += textLines.length * 5 + 10;
+                            }
+                        } else {
+                            if (y + 30 > pdf.internal.pageSize.getHeight()) {
+                                pdf.addPage();
+                                y = 10;
+                            }
+                            pdf.setFontSize(10);
+                            if (narrationElement && narrationElement.textContent) {
+                                const textLines = pdf.splitTextToSize(narrationElement.textContent, pageWidth);
+                                pdf.text(textLines, 10, y);
+                                y += textLines.length * 5 + 10;
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Error creating PDF:", e);
+                        alert("Error creating PDF. Please try again.");
+                        return;
+                    }
+                }
+            }
+            pdf.save("storyboard.pdf");
+        }
+
+        /**
+         * Downloads the storyboard images as a ZIP file.
+         */
+        async function downloadStoryboardZIP() {
+            if (state.currentFrameCount === 0) {
+                alert("No frames to download.");
+                return;
+            }
+            const zip = new JSZip();
+            const folder = zip.folder("images");
+            const tasks = [];
+
+            for (let i = 1; i <= state.currentFrameCount; i++) {
+                const imgEl = document.getElementById(`image-${i}`);
+                if (imgEl && imgEl.src && imgEl.src.startsWith("blob:")) {
+                    const url = imgEl.src;
+                    const fname = `frame-${i}.png`;
+                    tasks.push(
+                        fetch(url)
+                            .then((r) => r.blob())
+                            .then((b) => folder.file(fname, b))
+                    );
+                }
+            }
+            try {
+                await Promise.all(tasks);
+                const data = await zip.generateAsync({ type: "blob" });
+                saveAs(data, "storyboard_images.zip");
+            } catch (e) {
+                console.error(e);
+                alert("Error creating ZIP.");
+            }
+        }
+
+        /**
+         * Converts an image URL to a data URL.
+         * @param {string} url - The image URL.
+         * @returns {Promise<string>} - The data URL.
+         */
+        async function fetchImageData(url) {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        /**********************************************************
+         * NAVIGATION
+         **********************************************************/
+        /**
+         * Navigates to the Generator page.
+         */
+        function showGenerator() {
+            window.location.href = 'generator.html';
+        }
+
+        /**
+         * Navigates to the Storyboard page.
+         */
+        function navigateToStoryboard() {
+            window.location.href = 'storyboard.html';
+        }
+
+        /**
+         * Navigates to the Home page.
+         */
+        function navigateToHome() {
+            window.location.href = 'index.html';
+        }
+
+        /**
+         * Navigates to the Chat page.
+         */
+        function navigateToChat() {
+            window.location.href = 'chat.html';
+        }
+
+        /**
+         * Navigates to the Scriptwriter page.
+         */
+        function navigateToScriptwriter() {
+            window.location.href = 'scriptwriter.html';
+        }
+
+        /**********************************************************
+         * MODAL HANDLING
+         **********************************************************/
+        /**
+         * Opens the image modal to display an enlarged image.
+         * @param {number} n - The frame number.
+         */
+        function openModal(n) {
+            const imgSrc = document.getElementById(`image-${n}`).src;
+            const modal = document.getElementById("imageModal");
+            const modalImg = document.getElementById("modalImage");
+            modal.style.display = "flex";
+            modalImg.src = imgSrc;
+        }
+
+        /**
+         * Sets up modal event listeners.
+         */
+        function setupModal() {
+            const modal = document.getElementById("imageModal");
+            const closeBtn = document.querySelector(".close");
+            closeBtn.addEventListener("click", () => {
+                modal.style.display = "none";
+            });
+            window.addEventListener("click", (e) => {
+                if (e.target === modal) {
+                    modal.style.display = "none";
+                }
+            });
+        }
+
+        /**********************************************************
+         * DARK MODE
+         **********************************************************/
+        /**
+         * Toggles dark mode and saves preference to localStorage.
+         */
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+            const darkBtn = document.getElementById("darkModeToggle");
+            if (document.body.classList.contains("dark-mode")) {
+                darkBtn.innerHTML = '<i class="fas fa-sun"></i> ☀️';
+                darkBtn.setAttribute("aria-label", "Light Mode");
+            } else {
+                darkBtn.innerHTML = '<i class="fas fa-moon"></i> 🌙';
+                darkBtn.setAttribute("aria-label", "Dark Mode");
+            }
+            localStorage.setItem("darkMode", document.body.classList.contains("dark-mode"));
+        }
+
+        /**
+         * Loads dark mode preference from localStorage.
+         */
+        function loadDarkMode() {
+            const dm = localStorage.getItem("darkMode");
+            const darkBtn = document.getElementById("darkModeToggle");
+            if (dm === "true") {
+                document.body.classList.add("dark-mode");
+                darkBtn.innerHTML = '<i class="fas fa-sun"></i> ☀️';
+                darkBtn.setAttribute("aria-label", "Light Mode");
+            } else {
+                darkBtn.innerHTML = '<i class="fas fa-moon"></i> 🌙';
+                darkBtn.setAttribute("aria-label", "Dark Mode");
+            }
+        }
+
+        /**********************************************************
+         * DRAG & DROP REORDER MODE
+         **********************************************************/
+        /**
+         * Toggles the reorder mode for frames.
+         */
+        function toggleReorderMode() {
+            state.reorderModeEnabled = !state.reorderModeEnabled;
+            const reorderBtn = document.getElementById("reorderToggleBtn");
+            const frames = document.querySelectorAll('.image-container[id^="frame-"]');
+
+            if (state.reorderModeEnabled) {
+                reorderBtn.innerHTML = '<i class="fas fa-exchange-alt"></i> REORDER ON';
+                frames.forEach((frame) => {
+                    frame.setAttribute("draggable", "true");
+                    frame.addEventListener('dragstart', onDragStart);
+                    frame.addEventListener('dragover', onDragOver);
+                    frame.addEventListener('drop', onDrop);
+                });
+            } else {
+                reorderBtn.innerHTML = '<i class="fas fa-exchange-alt"></i> REORDER OFF';
+                frames.forEach((frame) => {
+                    frame.setAttribute("draggable", "false");
+                    frame.removeEventListener('dragstart', onDragStart);
+                    frame.removeEventListener('dragover', onDragOver);
+                    frame.removeEventListener('drop', onDrop);
+                });
+            }
+        }
+
+        /**
+         * Handles the drag start event.
+         * @param {DragEvent} e - The drag event.
+         */
+        function onDragStart(e) {
+            if (!state.reorderModeEnabled) {
+                e.preventDefault();
+                return;
+            }
+            e.dataTransfer.setData("text/plain", e.target.id);
+            e.dataTransfer.effectAllowed = "move";
+        }
+
+        /**
+         * Handles the drag over event.
+         * @param {DragEvent} e - The drag event.
+         */
+        function onDragOver(e) {
+            if (!state.reorderModeEnabled) {
+                e.preventDefault();
+                return;
+            }
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+        }
+
+        /**
+         * Handles the drop event.
+         * @param {DragEvent} e - The drag event.
+         */
+        function onDrop(e) {
+            if (!state.reorderModeEnabled) {
+                e.preventDefault();
+                return;
+            }
+            e.preventDefault();
+            const draggedId = e.dataTransfer.getData("text/plain");
+            const draggedEl = document.getElementById(draggedId);
+            const dropTarget = e.currentTarget;
+
+            if (draggedEl !== dropTarget) {
+                const container = dropTarget.parentNode;
+                const framesArr = Array.from(container.children);
+                const draggedIndex = framesArr.indexOf(draggedEl);
+                const targetIndex = framesArr.indexOf(dropTarget);
+
+                if (draggedIndex < targetIndex) {
+                    container.insertBefore(draggedEl, dropTarget.nextSibling);
+                } else {
+                    container.insertBefore(draggedEl, dropTarget);
+                }
+                reindexFrames();
+            }
+        }
+
+        /**
+         * Reindexes frames after reorder or removal.
+         */
+        function reindexFrames() {
+            const allFrames = document.querySelectorAll('.image-container[id^="frame-"]');
+            state.currentFrameCount = allFrames.length;
+            state.liveStory = []; // Reset live story
+
+            allFrames.forEach((f, index) => {
+                const newNum = index + 1;
+                f.id = `frame-${newNum}`;
+                const title = f.querySelector("h3");
+                if (title) title.textContent = `Frame ${newNum}`;
+                const removeBtn = f.querySelector(".remove-frame-btn");
+                if (removeBtn) {
+                    removeBtn.removeEventListener("click", removeFrame);
+                    removeBtn.addEventListener("click", () => removeFrame(newNum));
+                }
+                // Reindex all child elements
+                f.querySelectorAll("[id]").forEach((el) => {
+                    const oldId = el.id;
+                    const matched = oldId.match(/\D+(\d+)$/);
+                    if (matched) {
+                        el.id = oldId.replace(/\d+$/, newNum);
+                    }
+                });
+                const img = f.querySelector('img');
+                if (img) {
+                    img.removeEventListener("click", () => openModal(newNum));
+                    img.addEventListener("click", () => openModal(newNum));
+                }
+                const regenBtn = f.querySelector('button.regenerate-frame-btn');
+                if (regenBtn) {
+                    regenBtn.removeEventListener("click", regenerateFrame);
+                    regenBtn.addEventListener("click", () => regenerateFrame(newNum));
+                }
+            });
+
+            // Update Live Story Preview after reindexing
+            renderLiveStory();
+        }
+
+        /**********************************************************
+         * ADDITIONAL TOOLTIP HANDLING
+         **********************************************************/
+        /**
+         * Adds tooltips to elements with data-tooltip attributes.
+         */
+        function addTooltips() {
+            const tooltipElements = document.querySelectorAll('[data-tooltip-text]');
+            tooltipElements.forEach(element => {
+                const tooltipText = element.getAttribute('data-tooltip-text');
+                if (tooltipText) {
+                    const tooltipSpan = document.createElement('span');
+                    tooltipSpan.className = 'tooltiptext';
+                    tooltipSpan.textContent = tooltipText;
+                    element.appendChild(tooltipSpan);
+                }
+            });
+        }
+
+        /**
+         * Disables image download via right-click.
+         */
+        function disableImageDownload() {
+            const images = document.querySelectorAll("#storyboardFrames img");
+            images.forEach((img) => {
+                img.oncontextmenu = (e) => e.preventDefault();
+                img.draggable = false;
+            });
+        }
+
+        /**
+         * Toggles the state of interactive controls.
+         * @param {boolean} enable - Whether to enable or disable controls.
+         */
+        function toggleControls(enable) {
+            const controls = document.querySelectorAll('button, select, input, textarea');
+            controls.forEach(control => {
+                control.disabled = !enable;
+            });
+        }
+
+        /**********************************************************
+         * LIVE STORY PREVIEW
+         **********************************************************/
+        /**
+         * Updates the live story preview for a specific frame
+         * @param {number} frameNumber - The frame number
+         * @param {object} details - The frame details
+         */
+        function updateLiveStory(frameNumber, details) {
+            const frameSummary = `
+                <div class="story-frame">
+                    <h3>Frame ${frameNumber}</h3>
+                    ${details.emotion ? `<p><strong>Emotion:</strong> ${details.emotion}</p>` : ''}
+                    ${details.camera ? `<p><strong>Camera:</strong> ${details.camera}</p>` : ''}
+                    ${details.action ? `<p><strong>Action:</strong> ${details.action}</p>` : ''}
+                    ${details.narration ? `<p><strong>Scene:</strong> ${details.narration}</p>` : ''}
+                    <hr />
+                </div>
+            `;
+            state.liveStory[frameNumber - 1] = frameSummary;
+            renderLiveStory();
+        }
+
+        /**
+         * Renders the live story preview.
+         */
+        function renderLiveStory() {
+            const liveStoryContainer = document.getElementById("liveStory");
+            liveStoryContainer.innerHTML = state.liveStory.join('');
+        }
+
+        /**********************************************************
+         * PAGE LOAD
+         **********************************************************/
+        document.addEventListener("DOMContentLoaded", () => {
+            loadStoryboard(); // Load saved storyboard data
+            loadDarkMode();
+            setupModal();
+            addEventListeners();
+            addTooltips();
+            disableImageDownload();
+
+            // Initialize with one frame if none exist
+            if (state.currentFrameCount === 0) {
+                addFrame();
+            }
+        });
+
+        /**
+         * Adds event listeners to various buttons and elements.
+         */
+        function addEventListeners() {
+            // Navigation Buttons
+            document.getElementById('homeBtn').addEventListener('click', navigateToHome);
+            document.getElementById('generatorBtn').addEventListener('click', showGenerator);
+            document.getElementById('storyboardBtn').addEventListener('click', navigateToStoryboard);
+            document.getElementById('chatBtn').addEventListener('click', navigateToChat);
+
+            // Main Action Buttons
+            document.getElementById('addFrameBtn').addEventListener('click', addFrame);
+            document.getElementById('generateStoryboardBtn').addEventListener('click', generateStoryboard);
+            document.getElementById('reorderToggleBtn').addEventListener('click', toggleReorderMode);
+            document.getElementById('saveBtn').addEventListener('click', saveStoryboard);
+            document.getElementById('downloadPDFBtn').addEventListener('click', downloadStoryboardPDF);
+            document.getElementById('downloadZIPBtn').addEventListener('click', downloadStoryboardZIP);
+
+            // Style Selection Change with Debounce
+            document.getElementById('styleSelection').addEventListener('change', debounce(async (e) => {
+                const newStyle = e.target.value;
+                updateAllFramesStyle(newStyle);
+
+                // Optionally regenerate all frames automatically
+                if (confirm('Would you like to regenerate all frames with the new style?')) {
+                    await generateStoryboard();
+                }
+            }, 500));
+
+            // Dark Mode Toggle
+            document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+        }
+
+        /**
+         * Debounce function to limit the rate at which a function can fire.
+         * @param {Function} func - The function to debounce.
+         * @param {number} wait - The time to wait in milliseconds.
+         * @returns {Function} - The debounced function.
+         */
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        /**********************************************************
+         * UPDATE ALL FRAMES STYLE
+         **********************************************************/
+        /**
+         * Updates the style of all frames and clears existing images.
+         * @param {string} newStyle - The new style to apply.
+         */
+        function updateAllFramesStyle(newStyle) {
+            const frames = document.querySelectorAll('.image-container[id^="frame-"]');
+            frames.forEach(frame => {
+                frame.setAttribute("data-style", newStyle);
+                // Clear existing image to force regeneration with new style
+                const frameNumber = frame.id.split('-')[1];
+                const imgEl = document.getElementById(`image-${frameNumber}`);
+                if (imgEl) {
+                    imgEl.src = '#';
+                    imgEl.style.display = "none";
+                }
+            });
+            // Reset live story to ensure new style consistency
+            state.liveStory = [];
+            renderLiveStory();
+        }
+
+        /**********************************************************
+         * STORY STRUCTURE RANDOMIZATION (Simplified)
+         **********************************************************/
+        const emotions = [
+            "happy", "excited", "curious", "playful", "focused", "determined",
+            "relaxed", "surprised", "interested", "content", "energetic", "mischievous",
+            "angry", "fearful", "confused", "serene", "anxious", "joyful"
+        ];
+
+        const backgroundElements = [
+            "window", "bookshelf", "plant", "lamp", "carpet", "curtains", "clock", "pictures on wall",
+            "toys scattered", "sunlight streaming", "shadows cast", "decorative items", "vase with flowers",
+            "chair or stool", "table with books", "mirror reflecting the scene", "open door to another room",
+            "fireplace with embers", "painting or artwork", "stack of magazines", "coffee mug on table",
+            "ceiling fan spinning", "pillows on a couch", "fallen leaves near an open window", "rain streaks on a window",
+            "tree branches visible outside", "streetlights casting a glow", "clouds visible through a skylight",
+            "rugs with intricate patterns", "candlelight flickering", "writing desk with papers", "glasses resting on a book",
+            "brick wall texture", "cabinet with glass doors", "laundry basket", "television or monitor", "kitchen appliances in the background",
+            // Indoor-specific elements
+            "staircase in the corner", "bed with rumpled sheets", "hanging light fixture", "books stacked on the floor",
+            "toys under a table", "folding chairs", "window blinds partially drawn", "coat rack with jackets", "framed diploma on wall",
+            "vintage clock on a mantelpiece", "desk lamp with warm glow", "empty wine glasses on the counter",
+            // Outdoor-specific elements
+            "park bench under a tree", "bicycle leaning against a wall", "trash can near a sidewalk", "bird perched on a branch",
+            "cloudy sky with hints of sunlight", "puddle reflecting the sky", "street signs at a crossroads", "flowers blooming in a garden",
+            "fence covered in ivy", "mailbox at the edge of a driveway", "parked cars along the street", "children's playground equipment",
+            "open fields with wildflowers", "mountains in the distance", "river flowing under a bridge",
+            // Fantasy or thematic elements
+            "glowing crystals on the ground", "ancient ruins overgrown with moss", "a cauldron bubbling with smoke",
+            "floating lanterns in the sky", "flickering torches on a wall", "dragons soaring above the clouds",
+            "castle towers silhouetted against the moon", "enchanted forest with glowing mushrooms", "magic runes etched into stones",
+            "spaceship on a landing pad", "futuristic city skyline with neon lights", "robotic arm repairing a machine",
+            // Neutral or flexible elements
+            "scattered papers on a desk", "half-open door revealing another room", "wooden floor with scratches",
+            "tiles reflecting the light", "pillows stacked in a corner", "backpack hanging on a chair", "lanterns swaying in the wind",
+            "umbrellas stacked in a stand", "string lights hanging overhead", "fog creeping along the ground", "a clocktower visible in the distance"
+        ];
+
+        /**********************************************************
+         * LOADING MESSAGES FOR USER EXPERIENCE
+         **********************************************************/
+        const loadingMessages = {
+            start: [
+                "🎨 Warming up the creative engines...",
+                "✨ Gathering stardust for your story...",
+                "🌈 Mixing colors of imagination...",
+                "🎭 Preparing the canvas of dreams...",
+                "🚀 Initializing creative mode..."
+            ],
+            frame: [
+                "📝 Sketching frame {n} with pixie dust...",
+                "🎬 Directing scene {n} with magical flair...",
+                "🎭 Bringing frame {n} to life...",
+                "🌟 Sprinkling creativity on frame {n}...",
+                "🎪 Setting the stage for frame {n}...",
+                "🎨 Painting dreams into frame {n}...",
+                "🌈 Weaving colors into frame {n}...",
+                "✨ Creating magic in frame {n}..."
+            ],
+            error: [
+                "🔄 Attempting to recover missing data...",
+                "🛠️ Working on fixing the frame...",
+                "⚡ Regenerating missing elements...",
+                "🎨 Touching up the details...",
+                "✨ Adding missing magic..."
+            ],
+            finish: [
+                "✨ Adding final touches of magic...",
+                "🎬 Rolling the credits...",
+                "🌟 Polishing your masterpiece...",
+                "🎨 Putting the finishing sparkles...",
+                "🎭 Taking a final bow..."
+            ]
+        };
+
+        /**
+         * Gets a random message with optional frame number replacement
+         * @param {string} type - The type of message (start, frame, error, finish)
+         * @param {number} [frameNum] - Optional frame number
+         * @returns {string} - The formatted message
+         */
+        function getLoadingMessage(type, frameNum = null) {
+            const messages = loadingMessages[type];
+            if (!messages || !messages.length) {
+                return "Processing..."; // Fallback message
+            }
+
+            const message = messages[Math.floor(Math.random() * messages.length)];
+            return frameNum ? message.replace('{n}', frameNum) : message;
+        }
+
+        /**********************************************************
+         * ERROR HANDLING AND USER FEEDBACK
+         **********************************************************/
+        // All API calls include try-catch blocks with appropriate error messages to the user.
+
+        /**********************************************************
+         * Final Notes
+         **********************************************************/
+        // - Ensure all external scripts (like Pollinations.AI API) are accessible and properly configured.
+        // - Adjust CONCURRENT_REQUESTS based on the API rate limits to avoid throttling.
+        // - The application now includes improved error handling and user feedback mechanisms.
+        // - Prompts are dynamically generated to maximize the effectiveness of the Pollinations.AI API.
+
+    </script>
+</body>
+
+</html>

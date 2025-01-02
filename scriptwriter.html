@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Writer</title>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <!-- Google Fonts for Styling -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- jsPDF for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Toastr for Notifications -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- docx.js for .docx Import/Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.3.0/docx.min.js"></script>
+     <!-- FileSaver.js for .docx Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- Custom CSS -->
+     <style>
+        /* ===========================
+           General Styles
+        =========================== */
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+
+        /* ===========================
+           CSS Variables for Light and Dark Modes
+        =========================== */
+        :root {
+            /* Light Mode Colors */
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --primary-color: #6b8e23;
+            --button-bg: var(--primary-color);
+            --button-hover: #556b2f;
+            --button-text: #ffffff;
+            --paper-color: #ffffff;
+            --toolbar-bg: #f5f5f5;
+            --sidebar-bg: #fafafa;
+            --sidebar-border: #dcdcdc;
+            --modal-bg: rgba(255, 255, 255, 0.95);
+            --border-color: #ccc;
+            --comment-bg: #f0f0f0;
+            --comment-border: #ccc;
+        }
+
+        body.dark-mode {
+            /* Dark Mode Colors */
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --primary-color: #6b8e23;
+            --button-bg: var(--primary-color);
+            --button-hover: #556b2f;
+            --button-text: #ffffff;
+            --paper-color: #2d2d2d;
+            --toolbar-bg: #3a3a3a;
+            --sidebar-bg: #2a2a2a;
+            --sidebar-border: #444444;
+            --modal-bg: rgba(45, 45, 45, 0.95);
+            --border-color: #555;
+            --comment-bg: #3a3a3a;
+            --comment-border: #555;
+        }
+
+        /* ===========================
+           Header Styles
+        =========================== */
+        .main-header {
+            width: 100%;
+            background-color: var(--paper-color);
+            border-bottom: 1px solid var(--sidebar-border);
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+
+        .logo {
+            color: var(--primary-color);
+            font-size: 1.8em;
+            font-weight: bold;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .main-nav a {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            background-color: transparent;
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .main-nav a.active {
+            background-color: var(--primary-color);
+            color: var(--button-text);
+        }
+
+        .main-nav a:hover {
+            background-color: var(--button-hover);
+            color: var(--button-text);
+        }
+
+        /* ===========================
+           Main Wrapper Styles
+        =========================== */
+        .main-wrapper {
+            display: flex;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 20px;
+            gap: 25px;
+            flex: 1;
+            margin-top: 70px; /* Accounts for the fixed header */
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        /* ===========================
+           Sidebar Styles
+        =========================== */
+        .sidebar {
+            background: var(--sidebar-bg);
+            padding: 20px;
+            width: 250px;
+            max-width: 250px;
+            overflow-y: auto;
+            border-right: 1px solid var(--sidebar-border);
+            box-sizing: border-box;
+            border-radius: 8px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .input-group button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            cursor: pointer;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+
+        .input-group button:hover {
+            background-color: var(--button-hover);
+        }
+
+        /* ===========================
+           Script Editor Styles
+        =========================== */
+        .script-editor {
+            padding: 20px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            flex: 2;
+            overflow: hidden;
+            position: relative;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .document-container {
+             max-width: 800px;
+            margin: 0 auto;
+            background: var(--paper-color);
+             padding: 20px 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+             /* Updated to A4 Height: 793px width x 1122px height */
+             width: 793px; /* A4 width at 96 DPI */
+            height: 1122px; /* A4 height at 96 DPI */
+            border-radius: 4px;
+            position: relative;
+            padding-left: 80px; /* Space for line numbers */
+            max-width: 100%;
+            overflow-y: hidden; /* Hide scrollbar to manage pagination manually */
+            box-sizing: border-box;
+        }
+
+        /* ===========================
+           Toolbar Styles
+        =========================== */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            background: var(--toolbar-bg);
+            border-bottom: 1px solid var(--sidebar-border);
+            padding: 10px;
+            gap: 10px;
+            flex-wrap: wrap;
+            max-width: 100%;
+            box-sizing: border-box;
+            border-radius: 4px;
+        }
+
+        .toolbar > div {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .toolbar button {
+            padding: 8px 12px;
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 0.9em;
+        }
+
+        .toolbar button:hover {
+            background-color: var(--button-hover);
+        }
+
+        /* ===========================
+           Script Element Styles
+        =========================== */
+         .scene-heading {
+            text-transform: uppercase;
+            font-weight: bold;
+            margin: 20px 0 10px 0;
+            position: relative;
+            display: flex;
+            align-items: center;
+            font-size: 14pt;
+           /* Auto-capitalize the first letter */
+            text-transform: capitalize;
+        }
+
+        .scene-heading::before {
+            counter-increment: scene-number;
+            content: counter(scene-number);
+            position: absolute;
+            left: -50px;
+            font-size: 14pt;
+            color: var(--text-color);
+            min-width: 30px;
+            text-align: right;
+            line-height: 1.5;
+        }
+
+        .action {
+             margin: 10px 0;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            max-width: 100%;
+            box-sizing: border-box;
+            font-size: 12pt;
+           /* Auto-capitalize the first letter of each sentence */
+            text-transform: lowercase;
+        }
+
+        .action::first-letter {
+          text-transform: uppercase;
+        }
+
+        .character {
+            text-transform: uppercase;
+            margin: 10px 0 0 150px;
+            color: var(--primary-color);
+            font-weight: bold;
+            white-space: pre-wrap;
+            max-width: 100%;
+            box-sizing: border-box;
+            font-size: 12pt;
+        }
+
+        .parenthetical {
+            margin: 0 0 0 120px;
+            white-space: pre-wrap;
+            max-width: 100%;
+            box-sizing: border-box;
+            font-size: 11pt;
+            font-style: italic;
+        }
+
+        .dialogue {
+            margin: 0 150px 10px 100px;
+            white-space: pre-wrap;
+            max-width: 100%;
+            box-sizing: border-box;
+            font-size: 12pt;
+        }
+
+        .comment {
+            background-color: var(--comment-bg);
+            padding: 8px;
+            border-left: 4px solid var(--comment-border);
+            margin: 10px 0;
+            font-style: italic;
+            color: #777;
+            white-space: pre-wrap;
+            max-width: 100%;
+            box-sizing: border-box;
+            font-size: 11pt;
+            border-radius: 4px;
+        }
+
+        .transition {
+            text-transform: uppercase;
+            text-align: right;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            max-width: 100%;
+            box-sizing: border-box;
+            font-size: 12pt;
+        }
+
+        /* ===========================
+           Line Numbering Styles
+        =========================== */
+        .line-numbering {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 40px;
+            padding-top: 10px;
+            text-align: right;
+            color: #aaa;
+            font-size: 10pt;
+            user-select: none;
+             box-sizing: border-box;
+        }
+
+        /* ===========================
+           Page Numbering Styles
+        =========================== */
+        .page-number {
+            position: absolute;
+            bottom: 10px;
+            right: 20px;
+            font-size: 10pt;
+            color: var(--text-color);
+        }
+
+        /* ===========================
+           Script Elements Preservation
+        =========================== */
+        .keep-together {
+            page-break-inside: avoid; /* Semantic indication */
+        }
+
+        /* ===========================
+           Context Menu Styles
+        =========================== */
+        .context-menu {
+            position: absolute;
+            background: var(--paper-color);
+            border: 1px solid var(--sidebar-border);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            max-width: 200px;
+            box-sizing: border-box;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        .context-menu button {
+            padding: 8px 15px;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+
+        .context-menu button:hover {
+            background: var(--button-hover);
+            color: var(--button-text);
+        }
+
+        /* ===========================
+           Help Modal Styles
+        =========================== */
+        .help-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .help-modal-content {
+            background: var(--modal-bg);
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            box-sizing: border-box;
+            position: relative;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .help-modal-content h2 {
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        /* ===========================
+           Scenario & Director Fields Styles
+        =========================== */
+       .scenario-director {
+            margin-bottom: 20px;
+            text-align: left;
+            padding: 0 40px;
+             box-sizing: border-box;
+        }
+
+       .scenario-director input {
+            width: calc(100% - 20px); /* Adjust width for better centering */
+            padding: 8px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+             background: var(--bg-color);
+            color: var(--text-color);
+             font-size: 14pt;
+            display: block;
+        }
+
+        .scenario-director label {
+             font-weight: bold;
+             display: block;
+            margin-bottom: 5px;
+            text-align: left;
+             font-size: 12pt;
+        }
+
+        /* ===========================
+           Spinner Styles for Loading Indicators
+        =========================== */
+        .spinner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            display: none; /* Hidden by default */
+        }
+
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid var(--primary-color);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ===========================
+           Footer Styles
+        =========================== */
+        footer {
+            width: 100%;
+            background: var(--paper-color);
+            padding: 10px 20px;
+            text-align: center;
+            border-top: 1px solid var(--sidebar-border);
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            font-size: 0.9em;
+            color: var(--text-color);
+        }
+
+        footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ===========================
+           Responsive Design Adjustments
+        =========================== */
+       @media screen and (max-width: 1200px) {
+            .main-wrapper {
+                flex-direction: column;
+                padding: 10px;
+                margin-top: 70px;
+            }
+
+            .sidebar {
+                width: 100%;
+                margin-bottom: 20px;
+                max-width: 100%;
+                overflow-x: hidden;
+                box-sizing: border-box;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .main-header {
+                padding: 10px 15px;
+                flex-wrap: wrap;
+            }
+
+            .logo {
+                font-size: 1.4em;
+                margin-bottom: 5px;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-nav {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .main-nav a {
+                padding: 6px 12px;
+                font-size: 0.9em;
+                flex: 1;
+                min-width: 70px;
+                justify-content: center;
+            }
+
+             .document-container {
+                padding-left: 40px; /* Adjust padding for smaller screens */
+                width: 100%;
+                height: auto; /* Allow height to adjust based on content */
+            }
+
+          .scenario-director {
+            padding: 0 20px;
+           }
+        }
+
+        @media screen and (max-width: 480px) {
+            .main-wrapper {
+                padding: 5px;
+                margin-top: 120px;
+            }
+
+           .document-container {
+                padding-left: 20px; /* Further adjust padding for very small screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===========================
+       Loading Spinner Overlay
+    =========================== -->
+    <div class="spinner-overlay" id="spinnerOverlay" aria-hidden="true">
+        <div class="spinner" aria-label="Loading..."></div>
+        <div class="overlay">
+            <div class="loading-text">Loading...</div>
+            <div class="loading-message">Please wait while we process your request.</div>
+        </div>
+    </div>
+
+    <!-- ===========================
+       Help Modal
+    =========================== -->
+    <div class="help-modal" id="helpModal" aria-labelledby="helpTitle" role="dialog" aria-modal="true">
+        <div class="help-modal-content">
+            <button class="close-modal" onclick="closeHelpModal()" aria-label="Close Help">×</button>
+            <h2 id="helpTitle">Welcome to HEXACOLA AI Scriptwriter!</h2>
+            <p>Here's a quick guide to get you started:</p>
+            <ul>
+                <li><strong>Script Title:</strong> Enter the title of your script.</li>
+                <li><strong>Format:</strong> Select the script format (Screenplay, Stage Play, TV Script).</li>
+                <li><strong>Adding Elements:</strong> Use the toolbar buttons to add Scene Headings, Actions, Characters, Dialogues, Parentheticals, Transitions, and Comments.</li>
+                <li><strong>Pagination:</strong> Pages are created automatically as you type. A new page is generated only after a full A4 page is filled.</li>
+                <li><strong>Saving & Loading:</strong> Save your script to local storage and load it anytime.</li>
+                <li><strong>Import & Export:</strong> Import existing scripts or export your work as PDF, HTML, TXT, or DOCX files.</li>
+                <li><strong>Dark Mode:</strong> Toggle between light and dark themes using the moon icon in the header.</li>
+            </ul>
+            <p>Happy writing!</p>
+        </div>
+    </div>
+
+    <!-- ===========================
+       Header Navigation
+    =========================== -->
+    <header class="main-header">
+        <a href="index.html" class="logo">
+            <i class="fas fa-cube"></i> HEXACOLA.AI
+        </a>
+        <nav class="main-nav">
+            <a href="index.html" aria-label="Go to home">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="generator.html" aria-label="Go to generator view">
+                <i class="fas fa-magic"></i> Generator
+            </a>
+            <a href="storyboard.html" aria-label="Go to storyboard view">
+                <i class="fas fa-film"></i> Storyboard
+            </a>
+            <a href="scriptwriter.html" class="active" aria-label="Go to scriptwriter">
+                <i class="fas fa-pen-fancy"></i> Scriptwriter
+            </a>
+            <a href="chat.html" aria-label="Go to chat">
+                <i class="fas fa-comments"></i> Chat
+            </a>
+            <button onclick="toggleDarkMode()" class="dark-mode-toggle" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i> 🌙
+            </button>
+        </nav>
+    </header>
+
+    <!-- ===========================
+       Main Content Wrapper
+    =========================== -->
+    <div class="main-wrapper">
+        <!-- ===========================
+           Sidebar for Script Settings
+        =========================== -->
+        <aside class="sidebar">
+            <div class="input-group">
+                <label for="scriptTitle">Script Title:</label>
+                <input type="text" id="scriptTitle" placeholder="Untitled Script" autocapitalize="words" aria-label="Script Title">
+
+                <label for="scriptFormat">Format:</label>
+                <select id="scriptFormat" aria-label="Script Format">
+                    <option value="screenplay">Screenplay</option>
+                    <option value="stageplay">Stage Play</option>
+                    <option value="teleplay">TV Script</option>
+                </select>
+
+                <button class="save-btn" onclick="saveScript()" aria-label="Save Script">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button class="export-btn" onclick="exportPDF()" aria-label="Export as PDF">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+                <button class="export-docx-btn" onclick="exportDocx()" aria-label="Export as DOCX">
+                    <i class="fas fa-file-word"></i> Export DOCX
+                </button>
+                <button class="load-btn" onclick="loadScript()" aria-label="Load Script">
+                    <i class="fas fa-upload"></i> Load
+                </button>
+                <button class="import-btn" onclick="importScript()" aria-label="Import Script">
+                    <i class="fas fa-file-import"></i> Import
+                </button>
+                <button class="download-btn" onclick="downloadScript()" aria-label="Download Script">
+                    <i class="fas fa-download"></i> Download
+                </button>
+                <!-- Hidden File Input for Importing Scripts -->
+                <input type="file" id="fileInput" accept=".txt,.html,.docx" style="display:none;" onchange="handleFileUpload(event)">
+            </div>
+        </aside>
+
+        <!-- ===========================
+           Script Editor Area
+        =========================== -->
+        <main class="script-editor">
+            <div class="document-container" id="documentContainer">
+                <!-- ===========================
+                   Toolbar for Adding Elements and Formatting
+                =========================== -->
+                <div class="toolbar">
+                    <div class="script-elements">
+                        <button onclick="insertElement('scene')" aria-label="Insert Scene Heading">
+                            <i class="fas fa-heading"></i> Scene
+                        </button>
+                        <button onclick="insertElement('action')" aria-label="Insert Action">
+                            <i class="fas fa-play"></i> Action
+                        </button>
+                        <button onclick="insertElement('character')" aria-label="Insert Character">
+                            <i class="fas fa-user"></i> Character
+                        </button>
+                        <button onclick="insertElement('dialogue')" aria-label="Insert Dialogue">
+                            <i class="fas fa-comment-dots"></i> Dialogue
+                        </button>
+                        <button onclick="insertElement('parenthetical')" aria-label="Insert Parenthetical">
+                            <i class="fas fa-code"></i> Parenthetical
+                        </button>
+                        <button onclick="insertElement('transition')" aria-label="Insert Transition">
+                            <i class="fas fa-exchange-alt"></i> Transition
+                        </button>
+                        <button onclick="insertElement('comment')" title="Add Comment" aria-label="Insert Comment">
+                            <i class="fas fa-comment"></i> Comment
+                        </button>
+                    </div>
+                    <div class="formatting-tools">
+                        <button onclick="formatText('bold')" title="Bold" aria-label="Bold">
+                            <i class="fas fa-bold"></i>
+                        </button>
+                        <button onclick="formatText('italic')" title="Italic" aria-label="Italic">
+                            <i class="fas fa-italic"></i>
+                        </button>
+                        <button onclick="formatText('underline')" title="Underline" aria-label="Underline">
+                            <i class="fas fa-underline"></i>
+                        </button>
+                    </div>
+                    <div class="find-replace-tools">
+                        <input type="text" id="findInput" placeholder="Find" autocapitalize="none" aria-label="Find Text">
+                        <input type="text" id="replaceInput" placeholder="Replace" autocapitalize="none" aria-label="Replace Text">
+                        <button onclick="findAndReplace()" title="Find and Replace" aria-label="Find and Replace">
+                            <i class="fas fa-search-plus"></i> Replace
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ===========================
+                   Page Container for Dynamic Pagination
+                =========================== -->
+                <div id="page-container" class="page-container">
+                    <!-- Pages will be dynamically inserted here -->
+                </div>
+
+                <!-- ===========================
+                   Context Menu for Element Manipulation
+                =========================== -->
+                <div id="contextMenu" class="context-menu" style="display:none" role="menu">
+                    <button onclick="insertElementBefore()" role="menuitem">Insert Before</button>
+                    <button onclick="insertElementAfter()" role="menuitem">Insert After</button>
+                    <button onclick="removeElement()" role="menuitem">Remove</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ===========================
+       Footer Section
+    =========================== -->
+    <footer>
+        <p>API Documentation: <a href="https://github.com/pollinations/pollinations/blob/master/APIDOCS.md" target="_blank" rel="noopener noreferrer">Pollinations.AI</a></p>
+        <p>© 2024 Tauris – HEXACOLA AI</p>
+    </footer>
+
+    <!-- ===========================
+       Toastr JS for Notifications
+    =========================== -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+        // ===========================
+        // Toastr Configuration
+        // ===========================
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "3000"
+        };
+
+        // ===========================
+        // Global Variables
+        // ===========================
+        let pageCounter = 1; // Keeps track of page numbers
+
+        // ===========================
+        // Initialize Pages on Load
+        // ===========================
+        function initializePages() {
+            const pageContainer = document.getElementById('page-container');
+            if (pageContainer.children.length === 0) {
+                createNewPage(true); // Create the first page with Scenario & Director fields
+            }
+        }
+
+        // ===========================
+        // Create a New Page Function
+        // ===========================
+        /**
+         * Creates a new page and appends it to the page container.
+         * @param {boolean} isFirstPage - Indicates if the page is the first page.
+         * @param {Array} elements - Optional array of elements to populate the page with.
+         */
+        function createNewPage(isFirstPage = false, elements = []) {
+            const pageContainer = document.getElementById('page-container');
+            const page = document.createElement('div');
+            page.className = 'page';
+            page.style.position = 'relative';
+            page.style.paddingBottom = '40px'; // Space for page number
+
+            const lineNumbering = document.createElement('div');
+            lineNumbering.className = 'line-numbering';
+            page.appendChild(lineNumbering);
+
+            const pageContent = document.createElement('div');
+            pageContent.className = 'page-content';
+            pageContent.setAttribute('contenteditable', 'true');
+
+            page.appendChild(pageContent);
+
+            const pageNumber = document.createElement('div');
+            pageNumber.className = 'page-number';
+            pageNumber.innerText = pageCounter;
+            page.appendChild(pageNumber);
+
+            pageContainer.appendChild(page);
+
+            // If it's the first page, add Scenario Name and Director fields
+            if (isFirstPage) {
+                addScenarioDirectorFields(pageContent);
+            }
+
+            // Populate with initial elements if provided
+            if (elements.length > 0) {
+                elements.forEach(element => {
+                    pageContent.appendChild(element.cloneNode(true));
+                });
+            }
+
+            // Increment page counter
+            pageCounter++;
+
+            // Attach event listeners for content changes
+            pageContent.addEventListener('input', handleContentChange);
+            pageContent.addEventListener('keydown', handleKeyDown);
+
+            // Update line numbers initially
+            updateLineNumbers(pageContent, lineNumbering);
+        }
+
+        // ===========================
+        // Add Scenario Name and Director Fields
+        // ===========================
+        /**
+         * Adds Scenario Name and Director input fields to the first page.
+         * @param {HTMLElement} pageContent - The content area of the page.
+         */
+        function addScenarioDirectorFields(pageContent) {
+             const container = document.createElement('div');
+             container.className = 'scenario-director keep-together'; // Prevents splitting across pages
+
+const scenarioLabel = document.createElement('label');
+scenarioLabel.setAttribute('for', 'scenarioName');
+scenarioLabel.innerText = 'Scenario Name:';
+
+const scenarioInput = document.createElement('input');
+scenarioInput.type = 'text';
+scenarioInput.id = 'scenarioName';
+scenarioInput.placeholder = 'Enter Scenario Name';
+scenarioInput.setAttribute('aria-label', 'Scenario Name');
+
+const directorLabel = document.createElement('label');
+directorLabel.setAttribute('for', 'directorName');
+directorLabel.innerText = 'Director:';
+
+const directorInput = document.createElement('input');
+directorInput.type = 'text';
+directorInput.id = 'directorName';
+directorInput.placeholder = 'Enter Director Name';
+directorInput.setAttribute('aria-label', 'Director Name');
+
+container.appendChild(scenarioLabel);
+container.appendChild(scenarioInput);
+container.appendChild(directorLabel);
+container.appendChild(directorInput);
+
+pageContent.appendChild(container);
+}
+
+
+// ===========================
+// Handle Content Changes for Pagination
+// ===========================
+/**
+* Handles content changes to manage automatic pagination.
+* @param {Event} e - The input event.
+*/
+function handleContentChange(e) {
+const pageContent = e.target;
+const page = pageContent.parentElement;
+const lineNumbering = page.querySelector('.line-numbering');
+
+// Update line numbers
+updateLineNumbers(pageContent, lineNumbering);
+
+// Check if the content exceeds the page height
+if (pageContent.scrollHeight > pageContent.clientHeight) {
+    paginateContent(pageContent, page);
+}
+}
+
+// ===========================
+// Handle Keydown Events for Manual Page Breaks
+// ===========================
+/**
+* Handles keydown events to allow manual page breaks using Ctrl + Enter.
+* @param {Event} e - The keydown event.
+*/
+function handleKeyDown(e) {
+if (e.ctrlKey && e.key === 'Enter') {
+    e.preventDefault();
+    const pageContent = e.target;
+    createNewPage(false);
+    pageContent.innerHTML = ''; // Clear current page content
+    toastr.info('Page break inserted.');
+}
+}
+
+// ===========================
+// Paginate Content by Moving Elements to New Pages
+// ===========================
+/**
+* Paginates content by moving overflowing elements to a new page.
+* @param {HTMLElement} pageContent - The content area of the current page.
+* @param {HTMLElement} currentPage - The current page element.
+*/
+function paginateContent(pageContent, currentPage) {
+const elements = Array.from(pageContent.children);
+ for (let i = 0; i < elements.length; i++) {
+    const element = elements[i];
+    // Skip the typing indicator
+     if (element.classList.contains('typing-indicator')) continue;
+
+    // Clone the current element to measure its height
+    const tempClone = element.cloneNode(true);
+    tempClone.style.visibility = 'hidden';
+    tempClone.style.position = 'absolute';
+    tempClone.style.height = 'auto';
+    tempClone.style.maxHeight = 'none';
+     pageContent.appendChild(tempClone);
+
+
+     const currentScrollHeight = pageContent.scrollHeight;
+     const clientHeight = pageContent.clientHeight;
+
+    // Remove the clone after measurement
+     pageContent.removeChild(tempClone);
+
+    if (currentScrollHeight > clientHeight) {
+        // Move the element to a new page
+        pageContent.removeChild(element);
+         createNewPage(false, [element]);
+        toastr.info('New page created.');
+        break; // Prevent multiple page creations at once
+    }
+}
+}
+
+
+// ===========================
+// Update Line Numbers
+// ===========================
+/**
+* Updates the line numbers based on the number of lines in the content.
+* @param {HTMLElement} pageContent - The content area of the page.
+* @param {HTMLElement} lineNumbering - The line numbering element.
+*/
+function updateLineNumbers(pageContent, lineNumbering) {
+const lines = pageContent.innerText.split('\n').length;
+let numbers = '';
+for (let i = 1; i <= lines; i++) {
+    numbers += i + '<br>';
+}
+lineNumbering.innerHTML = numbers;
+}
+
+// ===========================
+// Save Script to Local Storage
+// ===========================
+/**
+* Saves the current script to the browser's local storage.
+*/
+function saveScript() {
+const spinner = document.getElementById('spinnerOverlay');
+spinner.style.display = 'flex';
+
+ setTimeout(() => { // Simulate loading
+    const scriptTitle = document.getElementById('scriptTitle').value || "Untitled Script";
+    const scriptFormat = document.getElementById('scriptFormat').value;
+    const scenarioName = document.getElementById('scenarioName') ? document.getElementById('scenarioName').value : "";
+    const directorName = document.getElementById('directorName') ? document.getElementById('directorName').value : "";
+     const pageContainer = document.getElementById('page-container');
+    const pages = Array.from(pageContainer.children).map(page => {
+        const contentClone = page.querySelector('.page-content').cloneNode(true);
+         // Remove typing indicator for saving
+        const typing = contentClone.querySelector('.typing-indicator');
+        if (typing) contentClone.removeChild(typing);
+        return contentClone.innerHTML;
+    });
+
+
+    const scriptData = {
+         title: scriptTitle,
+        format: scriptFormat,
+         scenario: scenarioName,
+        director: directorName,
+        pages: pages
+    };
+
+     localStorage.setItem('savedScript', JSON.stringify(scriptData));
+    spinner.style.display = 'none';
+    toastr.success('Script saved successfully!');
+ }, 1000);
+}
+
+// ===========================
+// Load Script from Local Storage
+// ===========================
+/**
+* Loads a saved script from the browser's local storage.
+*/
+function loadScript() {
+const spinner = document.getElementById('spinnerOverlay');
+spinner.style.display = 'flex';
+
+setTimeout(() => { // Simulate loading
+    const savedScript = localStorage.getItem('savedScript');
+    if (savedScript) {
+        const scriptData = JSON.parse(savedScript);
+        document.getElementById('scriptTitle').value = scriptData.title;
+        document.getElementById('scriptFormat').value = scriptData.format;
+
+         const pageContainer = document.getElementById('page-container');
+        pageContainer.innerHTML = '';
+         pageCounter = 1; // Reset page counter
+
+         scriptData.pages.forEach((pageHTML, index) => {
+            const tempDiv = document.createElement('div');
+             tempDiv.innerHTML = pageHTML;
+            const elements = Array.from(tempDiv.children);
+            createNewPage(index === 0, elements);
+        });
+
+        // Populate Scenario and Director fields if present
+        if (scriptData.scenario && scriptData.director) {
+             const firstPage = pageContainer.firstChild;
+            const scenarioInput = firstPage.querySelector('#scenarioName');
+            const directorInput = firstPage.querySelector('#directorName');
+            if (scenarioInput) scenarioInput.value = scriptData.scenario;
+             if (directorInput) directorInput.value = scriptData.director;
+        }
+
+        spinner.style.display = 'none';
+        toastr.success('Script loaded successfully!');
+    } else {
+        spinner.style.display = 'none';
+        toastr.error('No saved script found.');
+     }
+}, 1000);
+}
+
+// ===========================
+// Import Script from File
+// ===========================
+/**
+* Triggers the hidden file input to allow users to import scripts.
+*/
+function importScript() {
+document.getElementById('fileInput').click();
+}
+
+/**
+* Handles the file upload event for importing scripts.
+* @param {Event} event - The file input change event.
+*/
+function handleFileUpload(event) {
+const file = event.target.files[0];
+if (file) {
+    const reader = new FileReader();
+     reader.onload = function(e) {
+        const content = e.target.result;
+        const scriptFormat = document.getElementById('scriptFormat').value;
+        let pages = [];
+
+        if (file.type === 'text/plain' || ['screenplay', 'teleplay', 'stageplay'].includes(scriptFormat)) {
+            // Split by double newlines to separate elements
+            const rawElements = content.split(/\n\s*\n/);
+             rawElements.forEach(raw => {
+                 const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = raw;
+                const element = tempDiv.firstChild;
+                if (element) pages.push(element);
+            });
+         } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            // Handle DOCX import
+             importDocx(file);
+            return;
+        } else if (file.type === 'text/html') {
+             // Parse HTML content
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(content, 'text/html');
+            const pageDivs = doc.querySelectorAll('.page');
+            pageDivs.forEach(pageDiv => {
+                 const elements = Array.from(pageDiv.querySelectorAll('.page-content > div'));
+                pages.push(...elements);
+            });
+        }
+
+
+        const pageContainer = document.getElementById('page-container');
+        pageContainer.innerHTML = '';
+         pageCounter = 1; // Reset page counter
+
+        pages.forEach((element, index) => {
+            createNewPage(index === 0, [element]);
+        });
+
+
+        toastr.success('Script imported successfully from file.');
+    };
+    reader.onerror = function() {
+        toastr.error('Failed to read file.');
+    };
+     reader.readAsText(file);
+}
+// Reset the input value to allow re-uploading the same file if needed
+event.target.value = '';
+}
+
+/**
+* Imports a DOCX file and converts it to the script format.
+* @param {File} file - The DOCX file.
+*/
+async function importDocx(file) {
+ try {
+    const { Document, Packer } = window.docx;
+    const arrayBuffer = await file.arrayBuffer();
+    const doc = await Document.load(arrayBuffer);
+    const text = doc.getSections().map(section => section.getText()).join('\n');
+
+    // Simple parsing: split by double newlines
+    const rawElements = text.split(/\n\s*\n/);
+    const pages = rawElements.map(raw => {
+         const tempDiv = document.createElement('div');
+         tempDiv.innerText = raw;
+        return tempDiv.firstChild;
+     });
+
+    const pageContainer = document.getElementById('page-container');
+    pageContainer.innerHTML = '';
+    pageCounter = 1; // Reset page counter
+
+    pages.forEach((element, index) => {
+        createNewPage(index === 0, [element]);
+    });
+
+    toastr.success('DOCX script imported successfully!');
+} catch (error) {
+    console.error(error);
+    toastr.error('Failed to import DOCX file.');
+}
+}
+
+
+// ===========================
+// Download Script as File
+// ===========================
+/**
+* Downloads the current script as an HTML, TXT, or DOCX file based on the selected format.
+*/
+function downloadScript() {
+const scriptTitle = document.getElementById('scriptTitle').value || "Untitled_Script";
+ const scriptFormat = document.getElementById('scriptFormat').value;
+const pageContainer = document.getElementById('page-container');
+let blob;
+let filename;
+
+if (['screenplay', 'teleplay', 'stageplay'].includes(scriptFormat)) {
+    // Export as HTML to preserve formatting
+    blob = new Blob([pageContainer.innerHTML], { type: 'text/html' });
+    filename = `${scriptTitle}.html`;
+} else {
+     // Default to plain text
+    const allText = Array.from(pageContainer.querySelectorAll('.page-content')).map(page => page.innerText).join('\n\n');
+    blob = new Blob([allText], { type: 'text/plain' });
+    filename = `${scriptTitle}.txt`;
+}
+
+const link = document.createElement('a');
+ link.href = URL.createObjectURL(blob);
+link.download = filename;
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+
+ toastr.success('Script downloaded successfully!');
+}
+
+
+// ===========================
+// Export Script to PDF
+// ===========================
+/**
+* Exports the current script as a PDF file.
+*/
+function exportPDF() {
+const spinner = document.getElementById('spinnerOverlay');
+ spinner.style.display = 'flex';
+
+setTimeout(() => { // Simulate loading
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageContainer = document.getElementById('page-container');
+    const pages = Array.from(pageContainer.children);
+
+
+     if (pages.length === 0) {
+         toastr.error('No content to export.');
+        spinner.style.display = 'none';
+        return;
+    }
+
+     pages.forEach((page, index) => {
+        if (index > 0) {
+            doc.addPage();
+        }
+        const pageContent = page.querySelector('.page-content').innerText;
+        doc.setFont('Roboto Mono', 'normal');
+        doc.setFontSize(12);
+         const margin = 20;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const lines = doc.splitTextToSize(pageContent, pageWidth - (margin * 2));
+         doc.text(lines, margin, margin);
+    });
+
+
+    doc.save(`${document.getElementById('scriptTitle').value || 'script'}.pdf`);
+    spinner.style.display = 'none';
+     toastr.success('PDF exported successfully!');
+}, 1500);
+}
+
+
+// ===========================
+// Export Script to DOCX
+// ===========================
+/**
+* Exports the current script as a DOCX file.
+*/
+async function exportDocx() {
+const spinner = document.getElementById('spinnerOverlay');
+spinner.style.display = 'flex';
+
+setTimeout(async () => {
+    try {
+         const { Document, Packer, Paragraph, TextRun } = window.docx;
+         const pageContainer = document.getElementById('page-container');
+         const pages = Array.from(pageContainer.children);
+         const doc = new Document();
+
+        pages.forEach(page => {
+            const pageContent = page.querySelector('.page-content');
+            const elements = Array.from(pageContent.children);
+
+            elements.forEach(element => {
+                 if (element.classList.contains('scene-heading')) {
+                    doc.addSection({ children: [ new Paragraph({ children: [new TextRun({ text: element.innerText, bold: true, size: 28 }) ]})]});
+                } else if (element.classList.contains('action')) {
+                     doc.addSection({ children: [ new Paragraph({ children: [ new TextRun({ text: element.innerText, size: 24 }) ] }) ]});
+                } else if (element.classList.contains('character')) {
+                  doc.addSection({ children: [new Paragraph({ children: [new TextRun({ text: element.innerText, bold: true, size: 24, color: '#6b8e23' }) ] }) ]});
+                } else if (element.classList.contains('parenthetical')) {
+                     doc.addSection({ children: [new Paragraph({ children: [ new TextRun({ text: element.innerText, italics: true, size: 22 }) ] }) ] });
+                } else if (element.classList.contains('dialogue')) {
+                    doc.addSection({ children: [ new Paragraph({ children: [new TextRun({ text: element.innerText, size: 24 }) ]}) ]});
+                } else if (element.classList.contains('comment')) {
+                     doc.addSection({ children: [ new Paragraph({ children: [new TextRun({ text: element.innerText, italics: true, size: 22, color: '#777' }) ] }) ]});
+                 } else if (element.classList.contains('transition')) {
+                     doc.addSection({ children: [new Paragraph({ text: element.innerText, alignment: 'right',  size: 24 })]});
+                } else {
+                    doc.addSection({ children: [ new Paragraph({ children: [ new TextRun({ text: element.innerText, size: 24 }) ] }) ]});
+                 }
+            });
+         });
+
+        const blob = await Packer.toBlob(doc);
+        const scriptTitle = document.getElementById('scriptTitle').value || "Untitled_Script";
+        saveAs(blob, `${scriptTitle}.docx`);
+        spinner.style.display = 'none';
+        toastr.success('DOCX exported successfully!');
+    } catch (error) {
+        console.error(error);
+        spinner.style.display = 'none';
+         toastr.error('Failed to export DOCX.');
+     }
+}, 1500);
+}
+
+// ===========================
+// Insert Script Elements Functions
+// ===========================
+/**
+* Inserts a script element (e.g., Scene Heading, Action) into the current page.
+* @param {string} type - The type of script element to insert.
+*/
+function insertElement(type) {
+const pageContainer = document.getElementById('page-container');
+const lastPage = pageContainer.lastElementChild;
+const pageContent = lastPage.querySelector('.page-content');
+const newElement = createEditorElement(type);
+pageContent.appendChild(newElement);
+placeCaretAtEnd(newElement);
+toastr.success(`${capitalizeFirstLetter(type)} inserted.`);
+}
+
+/**
+* Creates a new editable script element based on the type.
+* @param {string} type - The type of script element.
+* @returns {HTMLElement} - The created script element.
+*/
+function createEditorElement(type){
+const div = document.createElement('div');
+div.className = type;
+div.setAttribute("contenteditable","true");
+
+switch(type) {
+    case 'scene':
+        div.classList.add('scene-heading', 'keep-together'); // Prevent splitting
+        div.innerHTML = 'INT. LOCATION - DAY';
+        break;
+     case 'action':
+        div.classList.add('action');
+        div.innerHTML = 'Action description here.';
+        break;
+    case 'character':
+         div.classList.add('character');
+        div.innerHTML = 'CHARACTER NAME';
+         break;
+    case 'dialogue':
+        div.classList.add('dialogue');
+        div.innerHTML = 'Dialogue goes here.';
+        break;
+     case 'parenthetical':
+        div.classList.add('parenthetical');
+        div.innerHTML = '(parenthetical)';
+        break;
+     case 'transition':
+        div.classList.add('transition');
+        div.innerHTML = 'CUT TO:';
+        break;
+    case 'comment':
+        div.classList.add('comment', 'keep-together'); // Prevent splitting
+        div.innerHTML = 'This is a comment.';
+         break;
+    default:
+        div.innerHTML = 'New Element';
+        break;
+}
+ return div;
+}
+
+/**
+* Places the caret at the end of the specified element.
+* @param {HTMLElement} el - The element to place the caret in.
+*/
+function placeCaretAtEnd(el) {
+el.focus();
+if (typeof window.getSelection != "undefined" && typeof document.createRange != "undefined") {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+}
+
+/**
+* Capitalizes the first letter of a string.
+* @param {string} string - The string to capitalize.
+* @returns {string} - The capitalized string.
+*/
+function capitalizeFirstLetter(string) {
+return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+
+// ===========================
+// Context Menu Functions
+// ===========================
+let targetElement = null;
+let contextPage = null;
+
+/**
+* Handles the context menu (right-click) event to show options for script elements.
+* @param {Event} e - The contextmenu event.
+*/
+document.addEventListener('contextmenu', function(e) {
+const page = e.target.closest('.page');
+ const content = e.target.closest('.page-content');
+
+if(content){
+    e.preventDefault();
+
+    const contextMenu = document.getElementById('contextMenu');
+    targetElement = e.target.closest('div');
+    contextPage = page;
+
+     if (targetElement) {
+        contextMenu.style.display = 'flex';
+        contextMenu.style.left = e.pageX + 'px';
+        contextMenu.style.top = e.pageY + 'px';
+    }
+} else {
+    document.getElementById('contextMenu').style.display = 'none';
+}
+});
+
+/**
+* Hides the context menu when clicking outside of it.
+* @param {Event} e - The click event.
+*/
+document.addEventListener('click', function(e) {
+const contextMenu = document.getElementById('contextMenu');
+ if (!e.target.closest('#contextMenu') && !e.target.closest('.page-content')) {
+    contextMenu.style.display = 'none';
+    targetElement = null;
+    contextPage = null;
+}
+});
+
+/**
+* Removes the targeted script element.
+*/
+function removeElement() {
+if (targetElement) {
+    targetElement.remove();
+    targetElement = null;
+    document.getElementById('contextMenu').style.display = 'none';
+    toastr.info('Element removed.');
+}
+}
+
+/**
+* Inserts a new script element before the targeted element.
+*/
+function insertElementBefore() {
+ if (targetElement && contextPage) {
+    const type = targetElement.className.split(' ')[0];
+    const newElement = createEditorElement(type);
+    contextPage.querySelector('.page-content').insertBefore(newElement, targetElement);
+    document.getElementById('contextMenu').style.display = 'none';
+    targetElement = null;
+    contextPage = null;
+    toastr.success('Element inserted before.');
+}
+}
+
+/**
+* Inserts a new script element after the targeted element.
+*/
+function insertElementAfter() {
+ if (targetElement && contextPage) {
+    const type = targetElement.className.split(' ')[0];
+    const newElement = createEditorElement(type);
+     contextPage.querySelector('.page-content').insertBefore(newElement, targetElement.nextSibling);
+    document.getElementById('contextMenu').style.display = 'none';
+     targetElement = null;
+    contextPage = null;
+    toastr.success('Element inserted after.');
+}
+}
+
+// ===========================
+// Dark Mode Toggle Function
+// ===========================
+/**
+* Toggles between light and dark modes.
+*/
+function toggleDarkMode() {
+document.body.classList.toggle('dark-mode');
+const isDark = document.body.classList.contains('dark-mode');
+ localStorage.setItem('darkMode', isDark);
+
+// Update button icon
+const darkBtn = document.querySelector('.dark-mode-toggle');
+darkBtn.innerHTML = isDark ?
+     '<i class="fas fa-sun"></i> ☀️' :
+    '<i class="fas fa-moon"></i> 🌙';
+}
+
+/**
+* Loads the user's dark mode preference from local storage.
+*/
+function loadDarkMode() {
+ const isDark = localStorage.getItem('darkMode') === 'true';
+if (isDark) {
+    document.body.classList.add('dark-mode');
+    const darkBtn = document.querySelector('.dark-mode-toggle');
+     darkBtn.innerHTML = '<i class="fas fa-sun"></i> ☀️';
+}
+}
+
+// ===========================
+// Find and Replace Functionality
+// ===========================
+/**
+* Finds and replaces text across all pages.
+*/
+function findAndReplace() {
+const findText = document.getElementById('findInput').value.trim();
+ const replaceText = document.getElementById('replaceInput').value.trim();
+const pageContainer = document.getElementById('page-container');
+let replacements = 0;
+
+if (!findText) {
+    toastr.warning('Please enter text to find.');
+     return;
+ }
+
+
+ const pages = pageContainer.querySelectorAll('.page-content');
+pages.forEach(page => {
+     const regex = new RegExp(findText, 'gi');
+    const originalHTML = page.innerHTML;
+    const newHTML = originalHTML.replace(regex, replaceText);
+    if (originalHTML !== newHTML) {
+        const matches = originalHTML.match(regex);
+        replacements += matches ? matches.length : 0;
+         page.innerHTML = newHTML;
+    }
+});
+
+ if (replacements > 0) {
+    toastr.success(`${replacements} replacements made.`);
+} else {
+    toastr.info('No matches found.');
+}
+}
+
+
+// ===========================
+// Help Modal Functions
+// ===========================
+/**
+* Opens the help modal.
+*/
+function openHelpModal() {
+const helpModal = document.getElementById('helpModal');
+helpModal.style.display = 'flex';
+localStorage.setItem('helpSeen', 'true');
+}
+
+/**
+* Closes the help modal.
+*/
+function closeHelpModal() {
+const helpModal = document.getElementById('helpModal');
+helpModal.style.display = 'none';
+}
+
+/**
+* Checks if the user has already seen the help modal.
+*/
+function checkHelpModal() {
+const helpSeen = localStorage.getItem('helpSeen');
+ if (!helpSeen) {
+    openHelpModal();
+}
+}
+
+// ===========================
+// Initialize the Application
+// ===========================
+document.addEventListener('DOMContentLoaded', () => {
+loadDarkMode();       // Apply user's dark mode preference
+ initializePages();    // Initialize the first page
+checkHelpModal();     // Show help modal if not seen before
+});
+
+
+// ===========================
+// Text Formatting Functions
+// ===========================
+/**
+* Formats the selected text based on the specified command.
+* @param {string} command - The command to apply (e.g., bold, italic).
+*/
+function formatText(command) {
+document.execCommand(command, false, null);
+}
+
+// ===========================
+// DOCX Export Helper Function
+// ===========================
+/**
+* Triggers the download of a DOCX file using FileSaver.js.
+* @param {Blob} blob - The DOCX file blob.
+* @param {string} filename - The name of the file.
+*/
+function saveAs(blob, filename) {
+saveAsFile(blob, filename); // Use FileSaver.js saveAs
+}
+
+// Toggle Navigation Functionality
+function toggleSection(sectionId) {
+    const sections = document.querySelectorAll('.container, .library-container');
+    sections.forEach(section => {
+        section.classList.remove('active');
+    });
+    const activeSection = document.getElementById(sectionId);
+    if (activeSection) {
+        activeSection.classList.add('active');
+    }
+    
+    const navButtons = document.querySelectorAll('.main-nav button');
+    navButtons.forEach(button => {
+        button.classList.remove('active');
+    });
+    const activeButton = document.querySelector(`.main-nav button[data-target="${sectionId}"]`);
+    if (activeButton) {
+        activeButton.classList.add('active');
+    }
+}
+
+// Export PDF Function
+function exportPdf() {
+    const spinner = document.getElementById('spinnerOverlay');
+    spinner.style.display = 'flex';
+    setTimeout(() => {
+        /* ...existing code... */
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const pages = Array.from(document.getElementById('page-container').children);
+        if (!pages.length) {
+            toastr.error('No content to export.');
+            spinner.style.display = 'none';
+            return;
+        }
+        pages.forEach((page, i) => {
+            if (i) doc.addPage();
+            const text = page.querySelector('.page-content').innerText;
+            doc.setFont('Roboto Mono', 'normal');
+            doc.setFontSize(12);
+            const margin = 20;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            doc.text(doc.splitTextToSize(text, pageWidth - margin * 2), margin, margin);
+        });
+        doc.save(`${document.getElementById('scriptTitle').value || 'script'}.pdf`);
+        spinner.style.display = 'none';
+        toastr.success('PDF exported successfully!');
+    }, 1500);
+}
+
+// Export DOCX Function
+async function exportDocx() {
+    const spinner = document.getElementById('spinnerOverlay');
+    spinner.style.display = 'flex';
+    setTimeout(async () => {
+        try {
+            /* ...existing code... */
+            const { Document, Packer, Paragraph, TextRun } = window.docx;
+            const pages = Array.from(document.getElementById('page-container').children);
+            if (!pages.length) {
+                toastr.error('No content to export.');
+                spinner.style.display = 'none';
+                return;
+            }
+            const doc = new Document();
+            pages.forEach(page => {
+                const text = page.querySelector('.page-content').innerText;
+                doc.addSection({
+                    children: [new Paragraph({ children: [new TextRun(text)] })],
+                });
+            });
+            const blob = await Packer.toBlob(doc);
+            const fileName = `${document.getElementById('scriptTitle').value || 'script'}.docx`;
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            spinner.style.display = 'none';
+            toastr.success('DOCX exported successfully!');
+        } catch (error) {
+            toastr.error('DOCX export error.');
+            spinner.style.display = 'none';
+        }
+    }, 1500);
+}
+
+// Initialize Navigation Button Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const navButtons = document.querySelectorAll('.main-nav button');
+    navButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const target = button.getAttribute('data-target');
+            toggleSection(target);
+        });
+    });
+});
+</script>
+</body>
+</html>
