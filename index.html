@@ -37,13 +37,49 @@
 
     <div class="main-wrapper">
         <main class="container active" id="homeContainer">
-            <div class="header">
-                <h1>Hexacola AI: Where your journey starts</h1>
-            </div>
+            <!-- New Hero Section -->
+            <section class="hero-section">
+                <div class="hero-content">
+                    <h1>Transform Your Creative Vision</h1>
+                    <p class="hero-subtitle">Create stunning images, design storyboards, and bring your ideas to life with AI</p>
+                    <div class="hero-buttons">
+                        <button class="primary-btn" onclick="showGenerator()">
+                            <i class="fas fa-magic"></i> Start Creating
+                        </button>
+                        <button class="secondary-btn" onclick="navigateToChat()">
+                            <i class="fas fa-comments"></i> Get Help
+                        </button>
+                    </div>
+                </div>
+            </section>
 
-            <!-- Latest Updates Section -->
-            <section class="updates-section">
-                <h2><i class="fas fa-newspaper"></i> Latest Updates</h2>
+            <!-- Quick Tools Access -->
+            <section class="quick-tools">
+                <div class="tools-grid">
+                    <div class="tool-card" onclick="showGenerator()">
+                        <i class="fas fa-magic"></i> <!-- Alternative icon for FA 5.15.4 -->
+                        <h3>Quick Generate</h3>
+                        <p>Create an image in seconds</p>
+                    </div>
+                    <div class="tool-card" onclick="navigateToStoryboard()">
+                        <i class="fas fa-film"></i>
+                        <h3>Storyboard</h3>
+                        <p>Visual story planning</p>
+                    </div>
+                    <div class="tool-card" onclick="navigateToChat()">
+                        <i class="fas fa-robot"></i>
+                        <h3>AI Assistant</h3>
+                        <p>Get creative guidance</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Latest Updates Section (with new styling) -->
+            <section class="updates-section highlight-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-newspaper"></i> What's New</h2>
+                    <span class="version-badge">Version 1.0.0</span>
+                </div>
                 <div class="update-card">
                     <h3>Version 1.0.0 - February 2024</h3>
                     <ul>
@@ -63,11 +99,13 @@
                 <div class="update-card">
                     <h3>Planned Features</h3>
                     <ul>
-                        <li>Additional AI Models Integration</li>
-                        <li>Advanced Scene Composition Tools</li>
+                        <li>AI-Powered Video Generation</li>
+                        <li>Enhanced AI Scriptwriter with Full Story Development</li>
+                        <li>Advanced Storyboard with Story-to-Video Pipeline</li>
+                        <li>Improved Image Generation Quality and Speed</li>
+                        <li>Better Overall Performance and User Experience</li>
                         <li>Real-time Collaboration Features</li>
                         <li>Extended Style Presets Library</li>
-                        <li>Enhanced Export Options</li>
                         <li>Mobile App Development</li>
                     </ul>
                 </div>
@@ -89,8 +127,8 @@
                     </div>
                     <div class="feature-card">
                         <i class="fas fa-pen-fancy"></i>
-                        <h3>Script Writer</h3>
-                        <p>Professional script formatting with multiple formats and automatic pagination.</p>
+                        <h3>Script Writer <span class="wip-badge" style="background: #ff6b6b; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em;">Work in Progress</span></h3>
+                        <p>Coming soon: AI-powered script writing assistant with intelligent story development, character arcs, and professional formatting. Currently in development.</p>
                     </div>
                     <div class="feature-card">
                         <i class="fas fa-comments"></i>
@@ -288,5 +326,67 @@
             window.location.href = 'chat.html';
         }
     </script>
+
+    <!-- Add this CSS to your style.css -->
+    <style>
+        .hero-section {
+            padding: 4rem 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, #2a2a72 0%, #009ffd 74%);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .primary-btn, .secondary-btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .primary-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+        }
+
+        .secondary-btn {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .quick-tools {
+            margin: 2rem 0;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .tool-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
 </body>
 </html>
