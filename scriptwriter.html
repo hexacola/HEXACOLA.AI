@@ -22,7 +22,7 @@
            General Styles
         =========================== */
         body {
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Courier New', Courier, monospace;
             line-height: 1.6;
             margin: 0;
             padding: 0;
@@ -148,6 +148,7 @@
             margin-top: 70px; /* Accounts for the fixed header */
             max-width: 100%;
             overflow-x: hidden;
+            padding-top: 130px; /* Account for header + fixed toolbar */
         }
 
         /* ===========================
@@ -244,7 +245,7 @@
             align-items: center;
             margin-bottom: 10px;
             background: var(--toolbar-bg);
-            border-bottom: 1px solid var(--sidebar-border);
+            border-bottom: 2px solid var(--primary-color);
             padding: 10px;
             gap: 10px;
             flex-wrap: wrap;
@@ -267,7 +268,8 @@
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s;
-            font-size: 0.9em;
+            font-size: 1em;
+            font-family: 'Roboto Mono', monospace;
         }
 
         .toolbar button:hover {
@@ -285,6 +287,8 @@
             display: flex;
             align-items: center;
             font-size: 14pt;
+            font-family: 'Courier New', Courier, monospace;
+            color: #2e86de;
            /* Auto-capitalize the first letter */
             text-transform: capitalize;
         }
@@ -308,6 +312,8 @@
             max-width: 100%;
             box-sizing: border-box;
             font-size: 12pt;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--text-color);
            /* Auto-capitalize the first letter of each sentence */
             text-transform: lowercase;
         }
@@ -319,12 +325,13 @@
         .character {
             text-transform: uppercase;
             margin: 10px 0 0 150px;
-            color: var(--primary-color);
+            color: #e74c3c;
             font-weight: bold;
             white-space: pre-wrap;
             max-width: 100%;
             box-sizing: border-box;
             font-size: 12pt;
+            font-family: 'Courier New', Courier, monospace;
         }
 
         .parenthetical {
@@ -334,14 +341,17 @@
             box-sizing: border-box;
             font-size: 11pt;
             font-style: italic;
+            color: #8e44ad;
         }
 
         .dialogue {
-            margin: 0 150px 10px 100px;
+            margin: 0 100px 10px 100px;
             white-space: pre-wrap;
             max-width: 100%;
             box-sizing: border-box;
             font-size: 12pt;
+            font-family: 'Courier New', Courier, monospace;
+            color: #27ae60;
         }
 
         .comment {
@@ -500,6 +510,8 @@
             color: var(--text-color);
              font-size: 14pt;
             display: block;
+            text-align: center; /* Centered text as normal words */
+            text-transform: none; /* Remove uppercase transform */
         }
 
         .scenario-director label {
@@ -632,6 +644,118 @@
                 padding-left: 20px; /* Further adjust padding for very small screens */
             }
         }
+
+        /* Real-time Preview Modal */
+        .preview-modal {
+            /* New styles for preview modal */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .preview-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            height: 80%;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Fixed Toolbar Styles */
+        .fixed-toolbar {
+            position: fixed;
+            top: 70px; /* Just below the header */
+            left: 0;
+            right: 0;
+            z-index: 999;
+            background: var(--toolbar-bg);
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        /* Adjust Main Wrapper to Account for Fixed Toolbar */
+        .main-wrapper {
+            padding: 80px 20px 20px 20px; /* Top padding adjusted */
+            display: flex;
+            gap: 25px;
+            flex: 1;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        /* Toolbar Button Styles */
+        .fixed-toolbar button {
+            margin: 5px;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        /* Preview Modal Enhancements */
+        .preview-modal {
+            /* ...existing styles... */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .preview-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            height: 80%;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Ensure Footer Stays Below Content */
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        /* Responsive Adjustments */
+        @media screen and (max-width: 768px) {
+            .fixed-toolbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .main-wrapper {
+                flex-direction: column;
+            }
+
+            .document-container {
+                width: 100%;
+                height: auto;
+                padding: 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -667,6 +791,14 @@
         </div>
     </div>
 
+    <!-- Preview Modal -->
+    <div class="preview-modal" id="previewModal">
+        <div class="preview-content" id="previewContent">
+            <!-- Rendered script will appear here -->
+        </div>
+        <button class="close-modal" onclick="closePreviewModal()" aria-label="Close Preview">×</button>
+    </div>
+
     <!-- ===========================
        Header Navigation
     =========================== -->
@@ -696,117 +828,115 @@
         </nav>
     </header>
 
-    <!-- ===========================
-       Main Content Wrapper
-    =========================== -->
-    <div class="main-wrapper">
-        <!-- ===========================
-           Sidebar for Script Settings
-        =========================== -->
-        <aside class="sidebar">
-            <div class="input-group">
-                <label for="scriptTitle">Script Title:</label>
-                <input type="text" id="scriptTitle" placeholder="Untitled Script" autocapitalize="words" aria-label="Script Title">
+    <!-- Fixed Toolbar -->
+    <div class="fixed-toolbar">
+        <div class="toolbar-buttons">
+            <!-- Existing Toolbar Buttons -->
+            <button onclick="insertElement('scene')" aria-label="Insert Scene">
+                <i class="fas fa-lightbulb"></i> Scene
+            </button>
+            <button onclick="insertElement('action')" aria-label="Insert Action">
+                <i class="fas fa-play"></i> Action
+            </button>
+            <button onclick="insertElement('transition')" aria-label="Insert Transition">
+                <i class="fas fa-exchange-alt"></i> Transition
+            </button>
+            <button onclick="insertElement('comment')" title="Add Comment" aria-label="Insert Comment">
+                <i class="fas fa-comment"></i> Comment
+            </button>
+            <button onclick="formatText('bold')" title="Bold" aria-label="Bold">
+                <i class="fas fa-bold"></i>
+            </button>
+            <button onclick="formatText('italic')" title="Italic" aria-label="Italic">
+                <i class="fas fa-italic"></i>
+            </button>
+            <button onclick="formatText('underline')" title="Underline" aria-label="Underline">
+                <i class="fas fa-underline"></i>
+            </button>
+            <button onclick="openPreviewModal()" aria-label="Preview Script">
+                <i class="fas fa-eye"></i> Preview
+            </button>
+        </div>
+        <div class="find-replace-tools">
+            <input type="text" id="findInput" placeholder="Find" autocapitalize="none" aria-label="Find Text">
+            <input type="text" id="replaceInput" placeholder="Replace" autocapitalize="none" aria-label="Replace Text">
+            <button onclick="findAndReplace()" aria-label="Find and Replace">
+                <i class="fas fa-search"></i> Replace
+            </button>
+        </div>
+    </div>
 
-                <label for="scriptFormat">Format:</label>
-                <select id="scriptFormat" aria-label="Script Format">
-                    <option value="screenplay">Screenplay</option>
-                    <option value="stageplay">Stage Play</option>
-                    <option value="teleplay">TV Script</option>
-                </select>
+    <div class="content-wrapper">
+        <div class="main-wrapper">
+            <!-- ===========================
+               Sidebar for Script Settings
+            =========================== -->
+            <aside class="sidebar">
+                <div class="input-group">
+                    <label for="scriptTitle">Script Title:</label>
+                    <input type="text" id="scriptTitle" placeholder="Untitled Script" autocapitalize="words" aria-label="Script Title">
 
-                <button class="save-btn" onclick="saveScript()" aria-label="Save Script">
-                    <i class="fas fa-save"></i> Save
-                </button>
-                <button class="export-btn" onclick="exportPDF()" aria-label="Export as PDF">
-                    <i class="fas fa-file-pdf"></i> Export PDF
-                </button>
-                <button class="export-docx-btn" onclick="exportDocx()" aria-label="Export as DOCX">
-                    <i class="fas fa-file-word"></i> Export DOCX
-                </button>
-                <button class="load-btn" onclick="loadScript()" aria-label="Load Script">
-                    <i class="fas fa-upload"></i> Load
-                </button>
-                <button class="import-btn" onclick="importScript()" aria-label="Import Script">
-                    <i class="fas fa-file-import"></i> Import
-                </button>
-                <button class="download-btn" onclick="downloadScript()" aria-label="Download Script">
-                    <i class="fas fa-download"></i> Download
-                </button>
-                <!-- Hidden File Input for Importing Scripts -->
-                <input type="file" id="fileInput" accept=".txt,.html,.docx" style="display:none;" onchange="handleFileUpload(event)">
+                    <label for="scriptFormat">Format:</label>
+                    <select id="scriptFormat" aria-label="Script Format">
+                        <option value="screenplay">Screenplay</option>
+                        <option value="stageplay">Stage Play</option>
+                        <option value="teleplay">TV Script</option>
+                    </select>
+
+                    <button class="save-btn" onclick="saveScript()" aria-label="Save Script">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <button class="export-btn" onclick="exportPDF()" aria-label="Export as PDF">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button class="export-docx-btn" onclick="exportDocx()" aria-label="Export as DOCX">
+                        <i class="fas fa-file-word"></i> Export DOCX
+                    </button>
+                    <button class="load-btn" onclick="loadScript()" aria-label="Load Script">
+                        <i class="fas fa-upload"></i> Load
+                    </button>
+                    <button class="import-btn" onclick="importScript()" aria-label="Import Script">
+                        <i class="fas fa-file-import"></i> Import
+                    </button>
+                    <button class="download-btn" onclick="downloadScript()" aria-label="Download Script">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                    <!-- Hidden File Input for Importing Scripts -->
+                    <input type="file" id="fileInput" accept=".txt,.html,.docx" style="display:none;" onchange="handleFileUpload(event)">
+                </div>
+            </aside>
+
+            <!-- ===========================
+               Script Editor Area
+            =========================== -->
+            <main class="script-editor">
+                <div class="document-container" id="documentContainer">
+                    <!-- ===========================
+                       Page Container for Dynamic Pagination
+                    =========================== -->
+                    <div id="page-container" class="page-container">
+                        <!-- Pages will be dynamically inserted here -->
+                    </div>
+
+                    <!-- ===========================
+                       Context Menu for Element Manipulation
+                    =========================== -->
+                    <div id="contextMenu" class="context-menu" style="display:none" role="menu">
+                        <button onclick="insertElementBefore()" role="menuitem">Insert Before</button>
+                        <button onclick="insertElementAfter()" role="menuitem">Insert After</button>
+                        <button onclick="removeElement()" role="menuitem">Remove</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Preview Modal -->
+        <div class="preview-modal" id="previewModal" aria-labelledby="previewTitle" role="dialog" aria-modal="true">
+            <div class="preview-content" id="previewContent">
+                <!-- Rendered script will appear here -->
             </div>
-        </aside>
-
-        <!-- ===========================
-           Script Editor Area
-        =========================== -->
-        <main class="script-editor">
-            <div class="document-container" id="documentContainer">
-                <!-- ===========================
-                   Toolbar for Adding Elements and Formatting
-                =========================== -->
-                <div class="toolbar">
-                    <div class="script-elements">
-                        <button onclick="insertElement('scene')" aria-label="Insert Scene Heading">
-                            <i class="fas fa-heading"></i> Scene
-                        </button>
-                        <button onclick="insertElement('action')" aria-label="Insert Action">
-                            <i class="fas fa-play"></i> Action
-                        </button>
-                        <button onclick="insertElement('character')" aria-label="Insert Character">
-                            <i class="fas fa-user"></i> Character
-                        </button>
-                        <button onclick="insertElement('dialogue')" aria-label="Insert Dialogue">
-                            <i class="fas fa-comment-dots"></i> Dialogue
-                        </button>
-                        <button onclick="insertElement('parenthetical')" aria-label="Insert Parenthetical">
-                            <i class="fas fa-code"></i> Parenthetical
-                        </button>
-                        <button onclick="insertElement('transition')" aria-label="Insert Transition">
-                            <i class="fas fa-exchange-alt"></i> Transition
-                        </button>
-                        <button onclick="insertElement('comment')" title="Add Comment" aria-label="Insert Comment">
-                            <i class="fas fa-comment"></i> Comment
-                        </button>
-                    </div>
-                    <div class="formatting-tools">
-                        <button onclick="formatText('bold')" title="Bold" aria-label="Bold">
-                            <i class="fas fa-bold"></i>
-                        </button>
-                        <button onclick="formatText('italic')" title="Italic" aria-label="Italic">
-                            <i class="fas fa-italic"></i>
-                        </button>
-                        <button onclick="formatText('underline')" title="Underline" aria-label="Underline">
-                            <i class="fas fa-underline"></i>
-                        </button>
-                    </div>
-                    <div class="find-replace-tools">
-                        <input type="text" id="findInput" placeholder="Find" autocapitalize="none" aria-label="Find Text">
-                        <input type="text" id="replaceInput" placeholder="Replace" autocapitalize="none" aria-label="Replace Text">
-                        <button onclick="findAndReplace()" title="Find and Replace" aria-label="Find and Replace">
-                            <i class="fas fa-search-plus"></i> Replace
-                        </button>
-                    </div>
-                </div>
-
-                <!-- ===========================
-                   Page Container for Dynamic Pagination
-                =========================== -->
-                <div id="page-container" class="page-container">
-                    <!-- Pages will be dynamically inserted here -->
-                </div>
-
-                <!-- ===========================
-                   Context Menu for Element Manipulation
-                =========================== -->
-                <div id="contextMenu" class="context-menu" style="display:none" role="menu">
-                    <button onclick="insertElementBefore()" role="menuitem">Insert Before</button>
-                    <button onclick="insertElementAfter()" role="menuitem">Insert After</button>
-                    <button onclick="removeElement()" role="menuitem">Remove</button>
-                </div>
-            </div>
-        </main>
+            <button class="close-modal" onclick="closePreviewModal()" aria-label="Close Preview">×</button>
+        </div>
     </div>
 
     <!-- ===========================
@@ -1275,6 +1405,10 @@ const spinner = document.getElementById('spinnerOverlay');
 setTimeout(() => { // Simulate loading
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+    doc.setProperties({
+        title: 'Script PDF',
+        subject: 'Exported Script'
+    });
     const pageContainer = document.getElementById('page-container');
     const pages = Array.from(pageContainer.children);
 
@@ -1290,12 +1424,16 @@ setTimeout(() => { // Simulate loading
             doc.addPage();
         }
         const pageContent = page.querySelector('.page-content').innerText;
-        doc.setFont('Roboto Mono', 'normal');
-        doc.setFontSize(12);
-         const margin = 20;
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const lines = doc.splitTextToSize(pageContent, pageWidth - (margin * 2));
-         doc.text(lines, margin, margin);
+        const lines = doc.splitTextToSize(pageContent, doc.internal.pageSize.width - 40);
+        let verticalOffset = 20;
+        lines.forEach((line) => {
+            doc.text(line, 20, verticalOffset);
+            verticalOffset += 8;
+            if (verticalOffset >= doc.internal.pageSize.height - 20) {
+                verticalOffset = 20;
+                doc.addPage();
+            }
+        });
     });
 
 
@@ -1641,8 +1779,22 @@ document.addEventListener('DOMContentLoaded', () => {
 loadDarkMode();       // Apply user's dark mode preference
  initializePages();    // Initialize the first page
 checkHelpModal();     // Show help modal if not seen before
-});
 
+// Enable smooth scrolling or dynamic overflow
+const pageContainer = document.getElementById('page-container');
+if (pageContainer) {
+    pageContainer.style.overflowY = 'auto';
+    pageContainer.style.maxHeight = '80vh';
+}
+
+const toolbar = document.querySelector('.toolbar');
+if (toolbar) {
+  const autoFormatBtn = document.createElement('button');
+  autoFormatBtn.textContent = 'Auto-Format';
+  autoFormatBtn.onclick = autoFormatScript;
+  toolbar.appendChild(autoFormatBtn);
+}
+});
 
 // ===========================
 // Text Formatting Functions
@@ -1766,6 +1918,64 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+function autoFormatScript() {
+  const pageContainer = document.getElementById('page-container');
+  const pages = Array.from(pageContainer.children);
+  pages.forEach(page => {
+    const content = page.querySelector('.page-content');
+    content.classList.add('script-font');
+    // Additional celtx-like styling or formatting logic here
+  });
+  toastr.info('Auto-format applied for script-like styling.');
+}
+
+/**
+* Opens the preview modal and displays the formatted script.
+*/
+function openPreviewModal() {
+    const previewModal = document.getElementById('previewModal');
+    const previewContent = document.getElementById('previewContent');
+    previewContent.innerHTML = formatScriptForPreview();
+    previewModal.style.display = 'flex';
+}
+
+/**
+* Closes the preview modal.
+*/
+function closePreviewModal() {
+    const previewModal = document.getElementById('previewModal');
+    previewModal.style.display = 'none';
+}
+
+/**
+* Formats the script content for preview.
+* @returns {string} - Formatted HTML string.
+*/
+function formatScriptForPreview() {
+    const pages = document.querySelectorAll('.page-content');
+    let formattedScript = '';
+    pages.forEach(page => {
+        formattedScript += page.innerHTML + '<br><br>';
+    });
+    return formattedScript;
+}
+
+/**
+ * Navigates to the specified page number (simple page management).
+ * @param {number} pageNumber - The page to navigate to.
+ */
+function goToPage(pageNumber) {
+    const pages = document.querySelectorAll('.page');
+    if (pageNumber < 1 || pageNumber > pages.length) {
+        toastr.warning('Invalid page number');
+        return;
+    }
+    pages.forEach((pg, index) => {
+        pg.style.display = (index + 1) === pageNumber ? 'block' : 'none';
+    });
+    toastr.info(`Moved to page ${pageNumber}`);
+}
 </script>
 </body>
 </html>
