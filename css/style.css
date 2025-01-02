@@ -685,6 +685,36 @@ body {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
+/* Continue Button */
+.continue-button {
+    margin-top: 8px;
+    padding: 6px 12px;
+    background-color: var(--primary-color);
+    color: var(--button-text);
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+    opacity: 0.9;
+}
+
+.continue-button:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.continue-button i {
+    font-size: 0.9em;
+}
+
+.dark-mode .continue-button {
+    background-color: var(--primary-hover);
+}
 
 /* Generated Images */
 .generated-image,
@@ -1746,7 +1776,7 @@ body.dark-mode .loading-message {
 
 .thinking-step.complete .step-number {
     background: var(--button-text);
-    color: var(--primary-color);
+    color: var (--primary-color);
 }
 
 .thinking-process.removing {
@@ -1773,46 +1803,10 @@ body.dark-mode .loading-message {
 }
 
 .thinking-step {
-    margin: 8px 0;
+    margin: 10px 0;
     opacity: 0;
     transform: translateX(-20px);
     transition: all 0.3s ease-out;
-}
-
-.step-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px;
-    background: var(--card-bg);
-    border-radius: 6px;
-}
-
-.step-number {
-    width: 24px;
-    height: 24px;
-    background: var(--primary-color);
-    color: var(--button-text);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9em;
-    font-weight: bold;
-}
-
-.step-label {
-    font-weight: 500;
-    color: var(--text-color);
-}
-
-.step-content {
-    margin-top: 5px;
-    padding: 8px;
-    background: rgba(var(--primary-color-rgb), 0.1);
-    border-radius: 4px;
-    font-size: 0.9em;
-    display: none;
 }
 
 .thinking-step.active {
@@ -1820,19 +1814,29 @@ body.dark-mode .loading-message {
     transform: translateX(0);
 }
 
-.thinking-step.active .step-content {
-    display: block;
-    animation: fadeIn 0.3s ease-out;
-}
-
 .thinking-step.complete .step-header {
     background: var(--primary-color);
     color: var(--button-text);
 }
 
-.thinking-step.complete .step-number {
-    background: var(--button-text);
-    color: var(--primary-color);
+.thinking-step.error .step-header {
+    background: #ff4444;
+    color: white;
+}
+
+.reasoning-text {
+    font-family: 'Consolas', monospace;
+    font-size: 0.9em;
+    white-space: pre-wrap;
+    padding: 8px;
+    border-left: 3px solid var(--primary-color);
+    margin: 5px 0;
+}
+
+.thinking-dots span {
+    display: inline-block;
+    animation: dot-bounce 1s infinite;
+    margin: 0 1px;
 }
 
 /* AI Thinking Process Styles */
@@ -1849,4 +1853,37 @@ body.dark-mode .loading-message {
     padding: 10px;
     border-radius: 8px;
     background: var(--surface-color);
+}
+
+.thinking-step.active .step-content {
+    opacity: 1;
+}
+
+.reasoning-text, .conclusion-text {
+    margin: 5px 0;
+    padding: 5px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.conclusion-text {
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.thinking-dots span {
+    display: inline-block;
+    animation: dot-bounce 1s infinite;
+}
+
+.thinking-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.thinking-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes dot-bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-4px); }
 }
