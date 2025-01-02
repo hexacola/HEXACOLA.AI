@@ -1434,3 +1434,15 @@ body.dark-mode .loading-message {
     color: #fff;
     border-color: #444;
 }
+
+/* Scriptwriting Styles */
+.scene-heading, .action, .character, .dialogue, .parenthetical, .comment, .transition {
+    font-family: 'Courier New', Courier, monospace; /* Scriptwriting font */
+    /* ...existing code... */
+}
+
+.script-font {
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 1.5;
+    /* Adjust letter-spacing and other typography as desired */
+}
