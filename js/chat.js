@@ -1,112 +1,43 @@
-// Add chat history array at the start of the file
+// Navigation Functions
+function navigateToHome() {
+    window.location.href = 'index.html';
+}
+
+function showGenerator() {
+    window.location.href = 'generator.html';
+}
+
+function navigateToStoryboard() {
+    window.location.href = 'storyboard.html';
+}
+
+function navigateToScriptwriter() {
+    window.location.href = 'scriptwriter.html';
+}
+
+function navigateToChat() {
+    window.location.href = 'chat.html';
+}
+
+// Initialize chat history and response cache
 let chatHistory = [];
+const responseCache = {};
 
-// Add a cache object at the start of the file
-const responseCache = [];
-
-// Add these functions at the beginning of the file
-async function fetchWithRetry(url, options, maxRetries = 3, delayMs = 1000) {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            const response = await fetch(url, options);
-            if (response.ok) {
-                return response;
-            }
-            throw new Error(`Attempt ${attempt}: API error ${response.status}`);
-        } catch (error) {
-            if (attempt === maxRetries) throw error;
-            console.log(`Retry attempt ${attempt} failed, retrying in ${delayMs}ms...`);
-            await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
+// API Configuration
+const API_CONFIG = {
+    baseUrl: 'https://text.pollinations.ai/',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    errorMessages: {
+        400: 'Invalid request. Please check your input.',
+        429: 'Too many requests. Please wait a moment.',
+        500: 'Server error. Please try again later.',
+        default: 'Something went wrong. Please try again.'
     }
-}
+};
 
-function showTypingIndicator() {
-    const chat = document.getElementById('chat');
-    const typingDiv = document.createElement('div');
-    typingDiv.classList.add('chat-message', 'assistant', 'typing');
-    typingDiv.id = 'typing-indicator';
-    typingDiv.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
-    chat.appendChild(typingDiv);
-    chat.scrollTop = chat.scrollHeight;
-}
-
-function removeTypingIndicator() {
-    const typingIndicator = document.getElementById('typing-indicator');
-    if (typingIndicator) {
-        typingIndicator.remove();
-    }
-}
-
-// Add function to format code blocks
-function formatMessage(content) {
-    // First escape HTML to prevent XSS, except for allowed tags
-    content = escapeHtml(content);
-    
-    // Format markdown elements
-    let formatted = content
-        // Bold text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        // Italic text
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        // Strikethrough
-        .replace(/~~(.*?)~~/g, '<del>$1</del>')
-        // Unordered lists - Fix for nested list creation
-        .replace(/^[\s]*[-*+][\s]+(.*?)$/gm, '<li>$1</li>')
-        // Ordered lists - Fix for nested list creation
-        .replace(/^[\s]*\d+\.[\s]+(.*?)$/gm, '<li>$1</li>')
-        // Wrap consecutive li elements in ul/ol tags
-        .replace(/(<li>(?:(?!<li>)[\s\S])*?<\/li>(?:\s*<li>(?:(?!<li>)[\s\S])*?<\/li>)*)/g, function(match) {
-            // Check if it's an ordered list (starts with number)
-            if (content.match(/^\d+\./m)) {
-                return '<ol>' + match + '</ol>';
-            }
-            return '<ul>' + match + '</ul>';
-        })
-        // Format markdown links
-        .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, 
-            '<a href="$2" target="_blank" rel="noopener noreferrer" class="formatted-link">$1</a>')
-        // Format code blocks with syntax highlighting
-        .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
-            const languageClass = language ? `language-${language}` : '';
-            return `<pre><code class="${languageClass}">${escapeHtml(code.trim())}</code></pre>`;
-        })
-        // Format inline code
-        .replace(/`([^`]+)`/g, (match, code) => {
-            return `<code class="inline-code">${escapeHtml(code)}</code>`;
-        });
-    
-    return formatted;
-}
-
-// Add HTML escape function
-function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-}
-
-// Add functions to open and close the code modal
-function openCodeModal(code, language = 'javascript') {
-    const modal = document.getElementById('codeModal');
-    const modalCode = document.getElementById('modalCode');
-    modalCode.textContent = code;
-    modalCode.className = `language-${language}`;
-    Prism.highlightElement(modalCode);
-    modal.style.display = 'block';
-}
-
-function closeCodeModal() {
-    const modal = document.getElementById('codeModal');
-    modal.style.display = 'none';
-}
-
-// Define the updated AI assistant prompt with enhanced intelligence
+// AI Assistant Prompt
 const aiBasePrompt = `
 You are hexacola, an advanced AI assistant with extensive knowledge and superior problem-solving abilities across various domains. Your capabilities include:
 
@@ -125,97 +56,180 @@ You are hexacola, an advanced AI assistant with extensive knowledge and superior
 Ensure all responses are precise, insightful, and tailored to the user's needs while maintaining a clear and professional tone.
 `;
 
-// Add AI thinking process steps
+// AI Thinking Steps
 const aiThinkingSteps = {
     understand: {
         label: "Understanding Query",
-        process: (query) => ({
-            components: query.split(' ').filter(word => word.length > 3),
-            intent: detectIntent(query),
-            domain: detectDomain(query),
-            requirements: extractRequirements(query)
-        })
+        process: async (query) => {
+            try {
+                await simulateThinking(500);
+                const context = analyzeContext(query);
+                return {
+                    mainGoal: detectMainGoal(query),
+                    domain: detectDomain(query),
+                    components: breakdownQuery(query),
+                    requirements: identifyRequirements(query),
+                    context: context
+                };
+            } catch (error) {
+                console.error('Error in understanding step:', error);
+                throw new Error('Failed to process query: ' + error.message);
+            }
+        }
     },
     analyze: {
         label: "Analyzing Context",
-        process: (context) => ({
-            relevantHistory: context.slice(-3),
-            patterns: findPatterns(context),
-            keywords: extractKeywords(context)
-        })
-    },
-    reason: {
-        label: "Logical Reasoning",
-        process: (data) => ({
-            concepts: identifyRelatedConcepts(data),
-            approach: determineApproach(data),
-            considerations: gatherConsiderations(data)
-        })
+        process: async (context) => {
+            await simulateThinking(700);
+            return {
+                topics: extractTopics(context),
+                patterns: findPatterns(context),
+                depth: assessComplexity(context),
+                relevance: checkContextRelevance(context)
+            };
+        }
     },
     formulate: {
-        label: "Formulating Response",
-        process: (reasoning) => ({
-            structure: buildResponseStructure(reasoning),
-            tone: determineTone(reasoning),
-            examples: gatherExamples(reasoning)
-        })
+        label: "Formulating Approach",
+        process: async (data) => {
+            await simulateThinking(600);
+            return {
+                strategy: determineApproach(data),
+                structure: buildResponseStructure(data),
+                tone: determineTone(data),
+                examples: gatherExamples(data)
+            };
+        }
+    },
+    generate: {
+        label: "Generating Response",
+        process: async (plan) => {
+            await simulateThinking(800);
+            return {
+                content: await generateContent(plan),
+                format: formatResponse(plan),
+                polish: enhanceResponse(plan)
+            };
+        }
     },
     verify: {
-        label: "Verifying Accuracy",
-        process: (response) => ({
-            completeness: checkCompleteness(response),
-            relevance: checkRelevance(response),
-            clarity: assessClarity(response)
-        })
+        label: "Verifying Output",
+        process: async (response) => {
+            await simulateThinking(400);
+            return {
+                accuracy: verifyAccuracy(response),
+                completeness: checkCompleteness(response),
+                clarity: assessClarity(response)
+            };
+        }
     }
 };
 
-// Add helper functions for reasoning process
-function detectDomain(query) {
-    const domains = {
-        technical: /\b(code|programming|software|hardware|computer|tech)\b/i,
-        scientific: /\b(science|physics|chemistry|biology|math)\b/i,
-        creative: /\b(art|design|write|create|generate|story)\b/i,
-        general: /\b(what|how|why|when|explain|help)\b/i
+// Helper Functions for Reasoning Process
+function simulateThinking(duration) {
+    return new Promise(resolve => setTimeout(resolve, duration));
+}
+
+function detectMainGoal(query) {
+    const goals = {
+        learn: /how|what|explain|understand/i,
+        solve: /fix|solve|help|issue/i,
+        create: /make|create|build|generate/i,
+        compare: /compare|versus|difference|better/i,
+        decide: /should|choose|recommend|suggest/i
     };
     
+    for (const [goal, pattern] of Object.entries(goals)) {
+        if (pattern.test(query)) return goal;
+    }
+    return 'inform';
+}
+
+function detectDomain(query) {
+    const domains = {
+        technical: /code|programming|technology|software|hardware|api|algorithm|debug|javascript|python|html|css|database|machine learning|AI|artificial intelligence/i,
+        scientific: /science|research|biology|chemistry|physics|data analysis|mathematics|statistics|astronomy|geology/i,
+        creative: /design|art|creative writing|innovation|music|storytelling|literature|poetry|photography|graphic design/i,
+        general: /.*/
+    };
+
     for (const [domain, pattern] of Object.entries(domains)) {
         if (pattern.test(query)) return domain;
     }
+
     return 'general';
 }
 
-function extractRequirements(query) {
-    const requirements = {
-        needsExample: /\b(example|show|demonstrate)\b/i,
-        needsExplanation: /\b(explain|why|how)\b/i,
-        needsSteps: /\b(steps|guide|tutorial|how to)\b/i,
-        needsComparison: /\b(versus|vs|compare|difference)\b/i
+function breakdownQuery(query) {
+    return {
+        topics: extractTopics(query),
+        keywords: extractKeywords(query),
+        qualifiers: extractQualifiers(query),
+        context: extractContextualInfo(query)
+    };
+}
+
+function extractTopics(query) {
+    const topics = query.toLowerCase().match(/\b\w{4,}\b/g) || [];
+    return [...new Set(topics)];
+}
+
+function extractQualifiers(query) {
+    const qualifiers = {
+        time: /\b(quick|fast|slow|now|later|immediately|soon)\b/i,
+        difficulty: /\b(easy|hard|simple|complex|challenging|difficult)\b/i,
+        importance: /\b(important|critical|essential|vital|necessary)\b/i,
+        preference: /\b(prefer|want|like|need|require)\b/i
     };
     
-    return Object.entries(requirements)
+    return Object.entries(qualifiers)
         .filter(([_, pattern]) => pattern.test(query))
-        .map(([req]) => req);
+        .map(([type]) => type);
 }
 
-// Update message formatting for reasoning display
-function formatReasoningStep(step, data) {
-    return `**${step.label}**\n${JSON.stringify(data, null, 2)}`;
+function extractContextualInfo(query) {
+    // Extract time context
+    const timeContext = query.match(/\b(today|tomorrow|yesterday|next week|last week|now|later)\b/gi) || [];
+    
+    // Extract location context
+    const locationContext = query.match(/\b(in|at|from|to)\s+([A-Za-z\s]+)\b/g) || [];
+    
+    // Extract subject/topic context
+    const subjectContext = query.match(/\b(about|regarding|concerning)\s+([A-Za-z\s]+)\b/g) || [];
+    
+    // Extract conditional context
+    const conditionalContext = query.match(/\b(if|when|unless|provided that)\s+([^,\.]+)/g) || [];
+
+    return {
+        time: timeContext,
+        location: locationContext,
+        subject: subjectContext,
+        conditions: conditionalContext,
+        original: query
+    };
 }
 
-// Add missing helper functions for reasoning process
 function findPatterns(context) {
-    // Analyze last few messages for patterns
     const patterns = [];
-    if (context && context.length > 1) {
-        const lastMessages = context.slice(-3);
-        const keywords = lastMessages.map(msg => 
-            msg.content.toLowerCase().match(/\b\w{4,}\b/g) || []
+    if (!context) return patterns;
+
+    let messages = [];
+    if (Array.isArray(context)) {
+        messages = context.slice(-3);
+    } else if (typeof context === 'string') {
+        messages = [{ content: context }];
+    }
+
+    if (messages.length > 0) {
+        const keywords = messages.map(msg => 
+            (msg.content || '').toLowerCase().match(/\b\w{4,}\b/g) || []
         );
         // Find repeated keywords
-        const repeatedWords = keywords.flat().filter((word, i, arr) => 
-            arr.indexOf(word) !== i
-        );
+        const wordCounts = keywords.flat().reduce((acc, word) => {
+            acc[word] = (acc[word] || 0) + 1;
+            return acc;
+        }, {});
+        const repeatedWords = Object.keys(wordCounts).filter(word => wordCounts[word] > 1);
         if (repeatedWords.length) {
             patterns.push('repeated_keywords');
         }
@@ -225,20 +239,148 @@ function findPatterns(context) {
 
 function extractKeywords(context) {
     const keywords = new Set();
-    if (context && context.length) {
+    // Ensure context is an array and not empty
+    if (Array.isArray(context) && context.length > 0) {
         context.forEach(msg => {
-            const words = msg.content.toLowerCase()
-                .match(/\b\w{4,}\b/g) || [];
-            words.forEach(word => keywords.add(word));
+            if (msg && typeof msg.content === 'string') {
+                const words = msg.content.toLowerCase()
+                    .match(/\b\w{4,}\b/g) || [];
+                words.forEach(word => keywords.add(word));
+            }
         });
+    } else if (typeof context === 'string') {
+        // Handle case where context is a string (direct query)
+        const words = context.toLowerCase()
+            .match(/\b\w{4,}\b/g) || [];
+        words.forEach(word => keywords.add(word));
     }
     return Array.from(keywords);
 }
 
+function identifyRequirements(query) {
+    // Extract specific requirements based on keywords and patterns
+    const requirements = [];
+
+    const requirementPatterns = {
+        time: /\b(quick|fast|slow|now|later|immediately|soon)\b/i,
+        difficulty: /\b(easy|hard|simple|complex|challenging|difficult)\b/i,
+        importance: /\b(important|critical|essential|vital|necessary)\b/i,
+        preference: /\b(prefer|want|like|need|require)\b/i,
+        format: /\b(format|structure|layout|style)\b/i,
+        examples: /\b(example|examples|sample|illustration)\b/i,
+        constraints: /\b(limit|constraint|restriction|boundary)\b/i
+    };
+
+    for (const [type, pattern] of Object.entries(requirementPatterns)) {
+        if (pattern.test(query)) {
+            requirements.push(type);
+        }
+    }
+
+    return requirements;
+}
+
+function analyzeContext(query) {
+    // Ensure chatHistory is properly initialized
+    if (!Array.isArray(chatHistory)) {
+        chatHistory = [];
+    }
+    
+    // Return both chat history and current query for context
+    return {
+        history: chatHistory,
+        currentQuery: query,
+        lastMessages: chatHistory.slice(-3)
+    };
+}
+
+function determineApproach(data) {
+    const intent = data.understand?.mainGoal || 'unknown';
+    const domain = data.understand?.domain || 'general';
+    
+    // Map intent and domain to approach
+    const approaches = {
+        learn: 'explanatory',
+        solve: 'instructional',
+        create: 'creative',
+        compare: 'analytical',
+        decide: 'balanced',
+        inform: 'balanced'
+    };
+    
+    return approaches[intent] || 'balanced';
+}
+
+function buildResponseStructure(reasoning) {
+    return {
+        format: reasoning.format === 'technical' ? 'technical' : 'conversational',
+        sections: determineResponseSections(reasoning),
+        style: reasoning.strategy
+    };
+}
+
+function determineResponseSections(reasoning) {
+    const sections = ['main_points'];
+    if (reasoning.format === 'technical') {
+        sections.push('code_examples');
+    }
+    if (reasoning.patterns && reasoning.patterns.includes('repeated_keywords')) {
+        sections.push('context_reference');
+    }
+    return sections;
+}
+
+async function generateContent(plan) {
+    // Placeholder for generating content based on the plan
+    // This should be replaced with actual content generation logic or API calls
+    return "This is a generated response based on the formulated approach.";
+}
+
+function formatResponse(plan) {
+    // Placeholder for formatting the response
+    // This should be replaced with actual formatting logic if needed
+    return "formatted response";
+}
+
+function enhanceResponse(plan) {
+    // Placeholder for enhancing the response (e.g., grammar check)
+    // This should be replaced with actual enhancement logic if needed
+    return "enhanced response";
+}
+
+function verifyAccuracy(response) {
+    // Placeholder for accuracy verification
+    // Implement actual accuracy verification logic as needed
+    return true;
+}
+
+function checkCompleteness(response) {
+    const missingElements = [];
+    if (!response) missingElements.push('empty_response');
+    if (response.length < 50) missingElements.push('too_short');
+    return missingElements.length === 0;
+}
+
+function checkContextRelevance(context) {
+    // Placeholder for context relevance check
+    // Implement actual relevance checking logic as needed
+    return true;
+}
+
+function assessComplexity(data) {
+    const requirements = data.requirements || [];
+    return requirements.length > 2 ? 'high' : 'moderate';
+}
+
+function assessClarity(response) {
+    const unclear = /\b(unclear|confusing|hard to understand)\b/i;
+    return !unclear.test(response);
+}
+
 function identifyRelatedConcepts(data) {
     const concepts = new Set();
-    if (data.understanding && data.understanding.domain) {
-        switch (data.understanding.domain) {
+    if (data.understand.domain) {
+        switch (data.understand.domain) {
             case 'technical':
                 concepts.add('programming');
                 concepts.add('technology');
@@ -258,322 +400,121 @@ function identifyRelatedConcepts(data) {
     return Array.from(concepts);
 }
 
-function determineApproach(data) {
-    const intent = data.understanding?.intent || 'unknown';
-    const domain = data.understanding?.domain || 'general';
-    
-    // Map intent and domain to approach
-    const approaches = {
-        question: 'explanatory',
-        command: 'instructional',
-        statement: 'analytical',
-        greeting: 'conversational'
-    };
-    
-    return approaches[intent] || 'balanced';
-}
+// Fetch with Retry Function
+async function fetchWithRetry(url, options, maxRetries = 3, delayMs = 1000) {
+    let lastError;
 
-function gatherConsiderations(data) {
-    return {
-        contextual: data.analysis?.relevantHistory?.length > 0,
-        technical: data.understanding?.domain === 'technical',
-        userLevel: determineUserLevel(data),
-        complexity: assessComplexity(data)
-    };
-}
-
-function determineUserLevel(data) {
-    const technicalTerms = /\b(api|function|code|programming|algorithm)\b/i;
-    const content = data.understanding?.components?.join(' ') || '';
-    return technicalTerms.test(content) ? 'technical' : 'general';
-}
-
-function assessComplexity(data) {
-    const requirements = data.understanding?.requirements || [];
-    return requirements.length > 2 ? 'high' : 'moderate';
-}
-
-function buildResponseStructure(reasoning) {
-    return {
-        format: reasoning.considerations?.technical ? 'technical' : 'conversational',
-        sections: determineResponseSections(reasoning),
-        style: reasoning.approach
-    };
-}
-
-function determineResponseSections(reasoning) {
-    const sections = ['main_points'];
-    if (reasoning.considerations?.technical) {
-        sections.push('code_examples');
-    }
-    if (reasoning.considerations?.contextual) {
-        sections.push('context_reference');
-    }
-    return sections;
-}
-
-function determineTone(reasoning) {
-    if (reasoning.approach === 'conversational') return 'friendly';
-    if (reasoning.approach === 'technical') return 'professional';
-    return 'balanced';
-}
-
-function gatherExamples(reasoning) {
-    const exampleTypes = [];
-    if (reasoning.considerations?.technical) {
-        exampleTypes.push('code');
-    }
-    if (reasoning.approach === 'explanatory') {
-        exampleTypes.push('analogies');
-    }
-    return exampleTypes;
-}
-
-function checkCompleteness(response) {
-    const missingElements = [];
-    // Basic completeness checks
-    if (!response) missingElements.push('empty_response');
-    if (response?.length < 50) missingElements.push('too_short');
-    return missingElements.length === 0;
-}
-
-function checkRelevance(response) {
-    // Simple relevance check
-    return true; // Implement more sophisticated checks as needed
-}
-
-function assessClarity(response) {
-    // Basic clarity checks
-    const unclear = /\b(unclear|confusing|hard to understand)\b/i;
-    return !unclear.test(response);
-}
-
-// Update the sendMessage function for friendly responses
-async function sendMessage() {
-    const chatInput = document.getElementById('chatInput');
-    const modelSelect = document.getElementById('modelSelect');
-    const message = chatInput.value.trim();
-    const selectedModel = modelSelect.value;
-    
-    if (message === '') return;
-
-    // Check if response is cached
-    if (responseCache[message]) {
-        appendMessage('assistant', responseCache[message]);
-        chatInput.value = '';
-        return;
-    }
-
-    // Add user message to history
-    chatHistory.push({ role: 'user', content: message });
-    appendMessage('user', message);
-    chatInput.value = '';
-    showTypingIndicator();
-
-    // Show AI thinking process
-    showThinkingProcess();
-
-    try {
-        const query = message;
-        const reasoningSteps = {};
-        
-        // Execute each reasoning step
-        reasoningSteps.understand = aiThinkingSteps.understand.process(query);
-        reasoningSteps.analyze = aiThinkingSteps.analyze.process(chatHistory);
-        reasoningSteps.reason = aiThinkingSteps.reason.process({
-            understanding: reasoningSteps.understand,
-            analysis: reasoningSteps.analyze
-        });
-        
-        // Enhanced context with reasoning
-        const enhancedContext = {
-            reasoning: reasoningSteps,
-            intent: reasoningSteps.understand.intent,
-            domain: reasoningSteps.understand.domain,
-            approach: reasoningSteps.reason.approach
-        };
-
-        // Add reasoning to the system message
-        const systemMessage = `
-            ${aiBasePrompt}
-            
-            Reasoning Context:
-            ${JSON.stringify(enhancedContext, null, 2)}
-            
-            Based on this analysis:
-            1. Domain: ${enhancedContext.domain}
-            2. Intent: ${enhancedContext.intent}
-            3. Approach: ${enhancedContext.approach}
-            
-            Please provide a well-reasoned response that addresses the user's needs.
-        `;
-
-        const contextSize = 15; // Increased context window
-        const lastMessages = chatHistory.slice(-contextSize);
-        
-        // Create prioritized message array
-        const prioritizedMessages = [
-            {
-                role: 'system',
-                content: systemMessage
-            },
-            // Add memory reinforcement message
-            {
-                role: 'system',
-                content: 'Remember to maintain context from the entire conversation. The previous message is particularly important for context.'
-            },
-            ...lastMessages.slice(0, -1), // All messages except the last one
-            // Add importance marker for the previous message
-            {
-                role: 'system',
-                content: 'The following message is particularly important for context:'
-            },
-            lastMessages[lastMessages.length - 1] // The last message
-        ];
-
-        // Create thinking context
-        const thinkingContext = {
-            query: message,
-            components: message.split(' ').filter(word => word.length > 3),
-            intent: detectIntent(message),
-            context: chatHistory.slice(-3)
-        };
-
-        // Enhanced message array with thinking context
-        const enhancedMessages = [
-            {
-                role: 'system',
-                content: `${aiBasePrompt}\n\nThinking Context:\n${JSON.stringify(thinkingContext, null, 2)}`
-            },
-            ...chatHistory
-        ];
-
-        const response = await fetchWithRetry('https://text.pollinations.ai/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                messages: prioritizedMessages,
-                model: selectedModel,
-                seed: Math.floor(Math.random() * 100000),
-                jsonMode: false
-            }),
-        });
-
-        const data = await response.text();
-        let assistantMessage;
-
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            const jsonData = JSON.parse(data);
-            if (jsonData.choices && jsonData.choices.length > 0) {
-                assistantMessage = jsonData.choices[0].message?.content;
-            } else if (jsonData.response) {
-                assistantMessage = jsonData.response;
+            const response = await fetch(url, options);
+            if (response.ok) return response;
+
+            lastError = new Error(API_CONFIG.errorMessages[response.status] || API_CONFIG.errorMessages.default);
+
+            // Don't retry on client errors except rate limits
+            if (response.status !== 429 && response.status < 500) {
+                break;
             }
-        } catch (e) {
-            assistantMessage = data;
-        }
 
-        if (assistantMessage) {
-            // Verify response before sending
-            reasoningSteps.verify = aiThinkingSteps.verify.process(assistantMessage);
-            
-            // Remove double response
-            removeThinkingProcess();
-            removeTypingIndicator();
-            
-            // Cache the response
-            responseCache[message] = assistantMessage;
-            
-            // Add assistant message to history
-            chatHistory.push({ role: 'assistant', content: assistantMessage });
-            
-            // Display message only once
-            appendMessage('assistant', assistantMessage);
-            
-            // Save chat history to localStorage
-            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
-        } else {
-            throw new Error('No valid response content');
-        }
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
 
-    } catch (error) {
-        console.error('Chat error:', error);
-        removeThinkingProcess();
-        appendMessage('assistant', `I'm sorry, something went wrong. Please try again.`);
+        } catch (error) {
+            lastError = error;
+            if (attempt === maxRetries) break;
+            await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
+        }
     }
+
+    throw lastError;
 }
 
-// Add new functions for AI thinking visualization
-function showThinkingProcess() {
+// Typing Indicator Functions
+function showTypingIndicator() {
     const chat = document.getElementById('chat');
-    const thinkingDiv = document.createElement('div');
-    thinkingDiv.id = 'thinking-process';
-    thinkingDiv.classList.add('thinking-process');
-    
-    let stepDelay = 0;
-    Object.entries(aiThinkingSteps).forEach(([key, step], index) => {
-        const stepDiv = document.createElement('div');
-        stepDiv.classList.add('thinking-step');
-        stepDiv.innerHTML = `
-            <div class="step-header">
-                <span class="step-number">${index + 1}</span>
-                <span class="step-label">${step.label}</span>
-            </div>
-            <div class="step-content"></div>
-        `;
-        thinkingDiv.appendChild(stepDiv);
-        
-        setTimeout(() => {
-            stepDiv.classList.add('active');
-            if (index > 0) {
-                thinkingDiv.children[index - 1].classList.add('complete');
-            }
-            chat.scrollTop = chat.scrollHeight;
-        }, stepDelay);
-        
-        stepDelay += 1000;
-    });
-    
-    chat.appendChild(thinkingDiv);
+    const typingDiv = document.createElement('div');
+    typingDiv.classList.add('chat-message', 'assistant', 'typing');
+    typingDiv.id = 'typing-indicator';
+    typingDiv.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+    chat.appendChild(typingDiv);
     chat.scrollTop = chat.scrollHeight;
 }
 
-function removeThinkingProcess() {
-    const thinkingProcess = document.getElementById('thinking-process');
-    if (thinkingProcess) {
-        thinkingProcess.classList.add('removing');
-        setTimeout(() => {
-            thinkingProcess.remove();
-        }, 300); // Match the fadeOut animation duration
+function removeTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
     }
 }
 
-function detectIntent(message) {
-    const intents = {
-        question: /^(what|how|why|when|where|who|can you|could you)/i,
-        command: /^(make|create|generate|show|tell|give|find)/i,
-        statement: /^(i|this|that|it|there)/i,
-        greeting: /^(hi|hello|hey|greetings)/i
+// Format Message Function with DOMPurify
+function formatMessage(content) {
+    // Sanitize HTML to prevent XSS using DOMPurify
+    const sanitizedContent = DOMPurify.sanitize(content, { ALLOWED_TAGS: ['strong', 'em', 'del', 'ul', 'ol', 'li', 'a', 'pre', 'code', 'br'], ALLOWED_ATTR: ['href', 'target', 'rel', 'class'] });
+
+    // Format markdown elements
+    let formatted = sanitizedContent
+        // Bold text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Italic text
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Strikethrough
+        .replace(/~~(.*?)~~/g, '<del>$1</del>')
+        // Unordered lists
+        .replace(/^[\s]*[-*+][\s]+(.*?)$/gm, '<li>$1</li>')
+        // Ordered lists
+        .replace(/^[\s]*\d+\.[\s]+(.*?)$/gm, '<li>$1</li>')
+        // Wrap consecutive li elements in ul/ol tags
+        .replace(/(<li>(?:(?!<li>)[\s\S])*?<\/li>(?:\s*<li>(?:(?!<li>)[\s\S])*?<\/li>)*)/g, function(match, p1, offset, string) {
+            // Determine if it's ordered or unordered based on the starting character
+            const precedingText = string.slice(0, offset);
+            const isOrdered = /\d+\.\s/.test(precedingText.slice(-5));
+            return isOrdered ? `<ol>${match}</ol>` : `<ul>${match}</ul>`;
+        })
+        // Format markdown links
+        .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, 
+            '<a href="$2" target="_blank" rel="noopener noreferrer" class="formatted-link">$1</a>')
+        // Format code blocks with syntax highlighting
+        .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
+            const languageClass = language ? `language-${language}` : '';
+            return `<pre><code class="${languageClass}">${escapeHtml(code.trim())}</code></pre>`;
+        })
+        // Format inline code
+        .replace(/`([^`]+)`/g, (match, code) => {
+            return `<code class="inline-code">${escapeHtml(code)}</code>`;
+        });
+    
+    return formatted;
+}
+
+// HTML Escape Function
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
     };
-
-    for (const [intent, pattern] of Object.entries(intents)) {
-        if (pattern.test(message)) return intent;
-    }
-    return 'unknown';
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
-// Add model validation function
-function validateModel(model) {
-    const validModels = [
-        'openai', 'qwen', 'qwen-coder', 'mistral', 
-        'mistral-large', 'searchgpt', 'evil', 'p1'
-    ];
-    return validModels.includes(model);
+// Code Modal Functions
+function openCodeModal(code, language = 'javascript') {
+    const modal = document.getElementById('codeModal');
+    const modalCode = document.getElementById('modalCode');
+    modalCode.textContent = code;
+    modalCode.className = `language-${language}`;
+    Prism.highlightElement(modalCode);
+    modal.style.display = 'block';
 }
 
-// Update appendMessage function
+function closeCodeModal() {
+    const modal = document.getElementById('codeModal');
+    modal.style.display = 'none';
+}
+
+// Append Message Function
 function appendMessage(role, content) {
     const chat = document.getElementById('chat');
     const messageDiv = document.createElement('div');
@@ -590,15 +531,192 @@ function appendMessage(role, content) {
     Prism.highlightAllUnder(messageDiv);
 }
 
-// Ensure modal can be closed when clicking outside of it
-window.onclick = function(event) {
-    const modal = document.getElementById('codeModal');
-    if (event.target == modal) {
-        modal.style.display = 'none';
+// AI Thinking Visualization Functions
+async function showThinkingProcess(query) {
+    const complexity = analyzeQueryComplexity(query);
+    
+    if (complexity.isSimple) {
+        const quickResult = await fastTrackReasoning(query);
+        return quickResult;
+    }
+
+    reasoningData.currentStep = null;
+    const chat = document.getElementById('chat');
+    const thinkingDiv = document.createElement('div');
+    thinkingDiv.id = 'thinking-process';
+    thinkingDiv.classList.add('thinking-process');
+    chat.appendChild(thinkingDiv);
+
+    // Start performance monitoring for reasoning process
+    console.time('Reasoning Process');
+
+    const steps = Object.values(aiThinkingSteps);
+    const results = {};
+
+    for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        reasoningData.currentStep = step.label;
+        
+        const stepDiv = createThinkingStep(step, i);
+        thinkingDiv.appendChild(stepDiv);
+
+        // Activate step
+        await simulateThinking(300);
+        stepDiv.classList.add('active');
+
+        // Process step
+        try {
+            const result = await step.process(query);
+            results[step.label] = result;
+            
+            // Show reasoning
+            const reasoningText = generateReasoningText(step.label, result);
+            updateStepContent(stepDiv, reasoningText);
+            
+            // Mark as complete
+            await simulateThinking(200);
+            stepDiv.classList.add('complete');
+        } catch (error) {
+            updateStepContent(stepDiv, `Error in ${step.label}: ${error.message}`);
+            stepDiv.classList.add('error');
+            reasoningData.errors.push(`${step.label}: ${error.message}`);
+            break;
+        }
+
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    console.timeEnd('Reasoning Process'); // End performance monitoring
+
+    return results;
+}
+
+function createThinkingStep(step, index) {
+    const stepDiv = document.createElement('div');
+    stepDiv.classList.add('thinking-step');
+    stepDiv.innerHTML = `
+        <div class="step-header">
+            <span class="step-number">${index + 1}</span>
+            <span class="step-label">${step.label}</span>
+            <span class="step-status">
+                <span class="thinking-dots"><span>.</span><span>.</span><span>.</span></span>
+            </span>
+        </div>
+        <div class="step-content">
+            <div class="reasoning"></div>
+            <div class="conclusion"></div>
+        </div>
+    `;
+    return stepDiv;
+}
+
+function generateReasoningText(label, result) {
+    const reasoning = {
+        "Understanding Query": `Analyzing query. Main goal: ${result.mainGoal}. Domain identified: ${result.domain}. Components identified: ${result.components.topics.join(', ') || 'None'}.`,
+        "Analyzing Context": `Analyzing context. Topics found: ${result.topics.join(', ') || 'None'}. Complexity assessed as ${result.depth}. Relevance: ${result.relevance ? 'High' : 'Low'}.`,
+        "Formulating Approach": `Formulating approach. Strategy: ${result.strategy}. Tone: ${result.tone}.`,
+        "Generating Response": `Generating response content.`,
+        "Verifying Output": `Verifying output. Accuracy: ${result.accuracy ? 'Good' : 'Needs Improvement'}. Completeness: ${result.completeness ? 'Complete' : 'Incomplete'}. Clarity: ${result.clarity ? 'Clear' : 'Unclear'}.`
+    };
+
+    return reasoning[label] || 'Processing...';
+}
+
+function updateStepContent(stepDiv, content) {
+    const reasoningDiv = stepDiv.querySelector('.reasoning');
+    if (reasoningDiv) {
+        reasoningDiv.innerHTML = `<div class="reasoning-text">${content}</div>`;
     }
 }
 
-// Dark mode functionality
+function removeThinkingProcess() {
+    const thinkingProcess = document.getElementById('thinking-process');
+    if (thinkingProcess) {
+        thinkingProcess.classList.add('removing');
+        setTimeout(() => {
+            thinkingProcess.remove();
+        }, 300); // Match the fadeOut animation duration
+    }
+}
+
+// Updated Send Message Function
+async function sendMessage() {
+    const chatInput = document.getElementById('chatInput');
+    const modelSelect = document.getElementById('modelSelect');
+    const message = chatInput.value.trim();
+    const selectedModel = modelSelect.value;
+
+    if (message === '') return;
+
+    try {
+        // Add user message
+        appendMessage('user', message);
+        chatInput.value = '';
+
+        const complexity = analyzeQueryComplexity(message);
+        let reasoningResults;
+
+        if (complexity.isSimple) {
+             // Fast track for simple queries
+            reasoningResults = await fastTrackReasoning(message);
+            if (reasoningResults.response) {
+                appendMessage('assistant', reasoningResults.response);
+                return;
+            }
+        }
+
+        showTypingIndicator();
+        reasoningResults = await showThinkingProcess(message);
+
+
+         // Prepare API request with complexity-aware parameters
+        const apiResponse = await fetchWithRetry(API_CONFIG.baseUrl, {
+            method: 'POST',
+            headers: API_CONFIG.headers,
+            body: JSON.stringify({
+                messages: [{ role: 'user', content: message }],
+                model: selectedModel,
+                reasoning: reasoningResults,
+                complexity: complexity.complexity
+            })
+        });
+
+
+        if (!apiResponse.ok) {
+            throw new Error(API_CONFIG.errorMessages[apiResponse.status] || API_CONFIG.errorMessages.default);
+        }
+
+        const data = await apiResponse.text();
+        removeTypingIndicator();
+
+        if (!complexity.isSimple) {
+           removeThinkingProcess();
+        }
+        // Add AI response
+        appendMessage('assistant', data);
+
+    } catch (error) {
+        console.error('Error in message processing:', error);
+        removeTypingIndicator();
+        removeThinkingProcess();
+        reasoningData.errors.push(error.message);
+        appendMessage('assistant', `I apologize, but I encountered an error: ${error.message}. Please try again.`);
+    } finally {
+         reasoningData.currentStep = null;
+         reasoningData.results = {};
+    }
+}
+
+// Model Validation Function
+function validateModel(model) {
+    const validModels = [
+        'openai', 'qwen', 'qwen-coder', 'mistral',
+        'mistral-large', 'searchgpt', 'evil', 'p1'
+    ];
+    return validModels.includes(model);
+}
+
+// Dark Mode Functions
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
     const darkBtn = document.querySelector('.dark-mode-toggle');
@@ -622,39 +740,62 @@ function loadDarkMode() {
     }
 }
 
-// Add a friendly welcome message on load
+// Button Click Handlers
+function handleSendMessageClick() {
+    sendMessage();
+}
+
+function handleOpenCodeModalClick() {
+    // Example code snippet; replace with dynamic content if necessary
+    const codeSample = "console.log('Hello, World!');";
+    const language = "javascript"; // Replace with dynamic language detection if needed
+    openCodeModal(codeSample, language);
+}
+
+function handleCloseCodeModalClick() {
+    closeCodeModal();
+}
+
+// Button Click Event Handlers
+function handleButtonClick(event) {
+    const button = event.target.closest('button');
+    if (!button) return;
+
+    const action = button.getAttribute('onclick');
+    if (action) {
+        event.preventDefault();
+        // Remove the () from the onclick attribute and call the function directly
+        const functionName = action.replace('()', '');
+        if (typeof window[functionName] === 'function') {
+            window[functionName]();
+        }
+    }
+}
+
+// Event Listeners and Initialization
 document.addEventListener('DOMContentLoaded', () => {
     loadDarkMode();
-    
-    // Add enter key support for chat input
-    document.getElementById('chatInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
+
+    // Single event listener for all buttons using event delegation
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('button');
+        if (button) {
+            handleButtonClick(event);
         }
     });
 
-    // Add model select validation
-    const modelSelect = document.getElementById('modelSelect');
-    modelSelect.addEventListener('change', (e) => {
-        if (!validateModel(e.target.value)) {
-            console.error('Invalid model selected');
-            e.target.value = 'openai'; // Reset to default model
-        }
-    });
-
-    // Load chat history from localStorage
-    const savedHistory = localStorage.getItem('chatHistory');
-    if (savedHistory) {
-        chatHistory = JSON.parse(savedHistory);
-        // Display previous messages
-        chatHistory.forEach(msg => appendMessage(msg.role, msg.content));
-    } else {
-        // Display a friendly welcome message
-        appendMessage('assistant', 'Hello! I\'m hexacola, your friendly assistant. How can I help you today?');
+    // Chat input handler
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
     }
 
-    // Add clear history button event listener
+    // Clear chat handler
     const clearButton = document.getElementById('clearChat');
     if (clearButton) {
         clearButton.addEventListener('click', () => {
@@ -662,8 +803,253 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem('chatHistory');
             const chat = document.getElementById('chat');
             chat.innerHTML = '';
-            // Optionally, add a message indicating the chat has been cleared
             appendMessage('assistant', 'Chat history cleared. Let\'s start fresh!');
         });
     }
+
+    // Load chat history
+    const savedHistory = localStorage.getItem('chatHistory');
+    if (savedHistory) {
+        chatHistory = JSON.parse(savedHistory);
+        chatHistory.forEach(msg => appendMessage(msg.role, msg.content));
+    } else {
+        appendMessage('assistant', 'Hello! I\'m hexacola, your friendly assistant. How can I help you today?');
+    }
+
+    // Modal close handler
+    window.onclick = function(event) {
+        const modal = document.getElementById('codeModal');
+        if (event.target === modal) {
+            closeCodeModal();
+        }
+    };
 });
+
+// Add DOMPurify if not already included
+if (typeof DOMPurify === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.3/purify.min.js';
+    document.head.appendChild(script);
+}
+
+// Add Reasoning Data Structure
+const reasoningData = {
+    currentStep: null,
+    results: {},
+    errors: []
+};
+
+// Add Query Complexity Analysis
+const queryTypes = {
+    greeting: /^(hi|hello|hey|good\s*(morning|afternoon|evening))(!|\s|$)/i,
+    simple: /^[^.!?]{1,25}[.!?]?$/i,
+    question: /^(who|what|when|where|why|how)\b/i,
+    command: /^(please\s+)?(show|tell|give|find|help)/i
+};
+
+function analyzeQueryComplexity(query) {
+    if (!query || typeof query !== 'string') {
+        return { isSimple: true, complexity: 'invalid', type: 'error' };
+    }
+
+    const complexityFactors = {
+        length: query.length > 50,
+        technicalTerms: /\b(code|programming|algorithm|function|api|database|system)\b/i.test(query),
+        multipleQuestions: (query.match(/\?/g) || []).length > 1,
+        isGreeting: queryTypes.greeting.test(query),
+        isSimpleQuery: queryTypes.simple.test(query)
+    };
+    
+    const type = Object.entries(queryTypes)
+        .find(([_, pattern]) => pattern.test(query))?.[0] || 'complex';
+    
+    return {
+        isSimple: complexityFactors.isGreeting || (complexityFactors.isSimpleQuery && !complexityFactors.technicalTerms),
+        complexity: complexityFactors.length || complexityFactors.technicalTerms || complexityFactors.multipleQuestions ? 'complex' : 'simple',
+        type,
+        factors: complexityFactors
+    };
+}
+
+// Fast Track Reasoning for Simple Queries
+async function fastTrackReasoning(query) {
+    const analysis = analyzeQueryComplexity(query);
+    
+    const responses = {
+        greeting: {
+            type: 'greeting',
+            intent: 'conversation',
+            tone: 'friendly',
+            response: getGreetingResponse()
+        },
+        simple: {
+            type: 'direct',
+            intent: 'quick_response',
+            tone: 'casual',
+            response: null
+        }
+    };
+
+    await simulateThinking(100); // Minimal thinking time for simple queries
+    return responses[analysis.type] || responses.simple;
+}
+
+function getGreetingResponse() {
+    const greetings = [
+        "Hello! How can I help you today?",
+        "Hi there! What can I do for you?",
+        "Hey! I'm ready to assist you.",
+        "Greetings! How may I help?"
+    ];
+    return greetings[Math.floor(Math.random() * greetings.length)];
+}
+
+// Updated Thinking Process Data Structure
+const reasoningProcess = {
+    steps: [
+        {
+            id: 'understand',
+            label: 'Understanding Query',
+            detail: 'Breaking down the question and identifying key components...'
+        },
+        {
+            id: 'analyze',
+            label: 'Analyzing Context',
+            detail: 'Examining relevant information and patterns...'
+        },
+        {
+            id: 'formulate',
+            label: 'Formulating Response',
+            detail: 'Developing comprehensive solution approach...'
+        },
+        {
+            id: 'verify',
+            label: 'Verifying Accuracy',
+            detail: 'Checking response quality and completeness...'
+        }
+    ],
+    currentStep: null,
+    results: {},
+    errors: []
+};
+
+// Enhanced Thinking Process Visualization
+async function showThinkingProcess(query) {
+    const thinkingContainer = document.createElement('div');
+    thinkingContainer.id = 'thinking-process';
+    thinkingContainer.classList.add('thinking-process');
+    
+    const chat = document.getElementById('chat');
+    chat.appendChild(thinkingContainer);
+
+    for (const step of reasoningProcess.steps) {
+        const stepElement = document.createElement('div');
+        stepElement.classList.add('thinking-step');
+        stepElement.innerHTML = `
+            <div class="step-header">
+                <span class="step-icon">🤔</span>
+                <span class="step-label">${step.label}</span>
+                <span class="step-status">Processing...</span>
+            </div>
+            <div class="step-content">
+                <div class="thinking-animation">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+                <div class="step-detail">${step.detail}</div>
+                <div class="step-result"></div>
+            </div>
+        `;
+        
+        thinkingContainer.appendChild(stepElement);
+        
+        try {
+            // Simulate processing time
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Process step
+            const result = await processThinkingStep(step, query);
+            
+            // Update step visualization
+            updateStepVisualization(stepElement, result);
+            
+            reasoningProcess.results[step.id] = result;
+        } catch (error) {
+            stepElement.classList.add('error');
+            stepElement.querySelector('.step-status').textContent = 'Error';
+            throw error;
+        }
+    }
+
+    return reasoningProcess.results;
+}
+
+function updateStepVisualization(stepElement, result) {
+    stepElement.classList.add('complete');
+    const statusEl = stepElement.querySelector('.step-status');
+    const resultEl = stepElement.querySelector('.step-result');
+    
+    statusEl.textContent = 'Complete';
+    statusEl.classList.add('success');
+    
+    if (result && typeof result === 'object') {
+        resultEl.innerHTML = `
+            <div class="result-content">
+                ${formatThinkingResult(result)}
+            </div>
+        `;
+    }
+}
+
+function formatThinkingResult(result) {
+    if (!result) return '';
+    
+    let html = '<ul class="thinking-results">';
+    for (const [key, value] of Object.entries(result)) {
+        if (value && typeof value !== 'function') {
+            html += `<li><strong>${key}:</strong> ${formatValue(value)}</li>`;
+        }
+    }
+    html += '</ul>';
+    return html;
+}
+
+function formatValue(value) {
+    if (Array.isArray(value)) {
+        return value.join(', ');
+    } else if (typeof value === 'object') {
+        return JSON.stringify(value);
+    }
+    return value.toString();
+}
+
+async function processThinkingStep(step, query) {
+    switch (step.id) {
+        case 'understand':
+            return {
+                mainGoal: detectMainGoal(query),
+                components: breakdownQuery(query),
+                context: analyzeContext(query)
+            };
+        case 'analyze':
+            return {
+                topics: extractTopics(query),
+                complexity: assessComplexity({ requirements: identifyRequirements(query) }),
+                patterns: findPatterns(query)
+            };
+        case 'formulate':
+            return {
+                approach: determineApproach({ understand: reasoningProcess.results.understand }),
+                structure: buildResponseStructure(reasoningProcess.results)
+            };
+        case 'verify':
+            return {
+                complete: true,
+                accuracy: 'high',
+                clarity: 'verified'
+            };
+        default:
+            return null;
+    }
+}
