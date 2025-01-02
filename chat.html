@@ -96,7 +96,18 @@
         .dark-mode #codeModal pre {
             background: #2d2d2d;
         }
+
+        /* Add styles for thinking process */
+        .thinking-step {
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        .thinking-step.active {
+            opacity: 1;
+            font-weight: bold;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.3/purify.min.js"></script>
 </head>
 <body>
     <header class="main-header">
@@ -138,6 +149,12 @@
                 <div class="chat" id="chat" role="log" aria-live="polite">
                     <!-- Chat messages will appear here -->
                 </div>
+                <!-- Add thinking process indicators -->
+                <div id="thinking-indicators" class="thinking-indicators" style="display: none;">
+                    <div class="thinking-step">Understanding Query</div>
+                    <div class="thinking-step">Analyzing Context</div>
+                    <div class="thinking-step">Generating Response</div>
+                </div>
                 <div class="chat-input-group">
                     <select id="modelSelect" aria-label="Select AI model">
                         <option value="openai">OpenAI-4</option>
@@ -149,7 +166,7 @@
                         <option value="evil">Evil Mode</option>
                     </select>
                     <input type="text" id="chatInput" placeholder="Write a message..." aria-label="Write a message" />
-                    <button onclick="sendMessage()" aria-label="Send message">
+                    <button id="sendMessageBtn" class="send-button">
                         <i class="fas fa-paper-plane"></i> Send
                     </button>
                 </div>
@@ -190,6 +207,19 @@
         function navigateToScriptwriter() {
             window.location.href = 'scriptwriter.html';
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const sendButton = document.getElementById('sendMessageBtn');
+            if (sendButton) {
+                sendButton.addEventListener('click', () => {
+                    if (typeof sendMessage === 'function') {
+                        sendMessage();
+                    } else {
+                        console.error('sendMessage function not found');
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
