@@ -51,12 +51,18 @@ function formatMessage(content) {
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
         // Strikethrough
         .replace(/~~(.*?)~~/g, '<del>$1</del>')
-        // Unordered lists
-        .replace(/^\- (.*?)$/gm, '<li>$1</li>')
-        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
-        // Ordered lists
-        .replace(/^\d+\. (.*?)$/gm, '<li>$1</li>')
-        .replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>')
+        // Unordered lists - Fix for nested list creation
+        .replace(/^[\s]*[-*+][\s]+(.*?)$/gm, '<li>$1</li>')
+        // Ordered lists - Fix for nested list creation
+        .replace(/^[\s]*\d+\.[\s]+(.*?)$/gm, '<li>$1</li>')
+        // Wrap consecutive li elements in ul/ol tags
+        .replace(/(<li>(?:(?!<li>)[\s\S])*?<\/li>(?:\s*<li>(?:(?!<li>)[\s\S])*?<\/li>)*)/g, function(match) {
+            // Check if it's an ordered list (starts with number)
+            if (content.match(/^\d+\./m)) {
+                return '<ol>' + match + '</ol>';
+            }
+            return '<ul>' + match + '</ul>';
+        })
         // Format markdown links
         .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, 
             '<a href="$2" target="_blank" rel="noopener noreferrer" class="formatted-link">$1</a>')
