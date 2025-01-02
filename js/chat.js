@@ -1,6 +1,9 @@
 // Add chat history array at the start of the file
 let chatHistory = [];
 
+// Add a cache object at the start of the file
+const responseCache = [];
+
 // Add these functions at the beginning of the file
 async function fetchWithRetry(url, options, maxRetries = 3, delayMs = 1000) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -53,76 +56,67 @@ function formatMessage(content) {
         .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
         // Ordered lists
         .replace(/^\d+\. (.*?)$/gm, '<li>$1</li>')
-        .replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>');
-
-    // Format markdown links
-    formatted = formatted.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, 
-        '<a href="$2" target="_blank" rel="noopener noreferrer" class="formatted-link">$1</a>');
-
-    // Format code blocks
-    formatted = formatted.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
-        const languageClass = language ? ` language-${language}` : '';
-        return `<pre><code class="code-block${languageClass}">${code.trim()}</code></pre>`;
-    });
-    
-    // Format inline code
-    formatted = formatted.replace(/`([^`]+)`/g, (match, code) => {
-        return `<code class="inline-code">${code}</code>`;
-    });
+        .replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>')
+        // Format markdown links
+        .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, 
+            '<a href="$2" target="_blank" rel="noopener noreferrer" class="formatted-link">$1</a>')
+        // Format code blocks with syntax highlighting
+        .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
+            const languageClass = language ? `language-${language}` : '';
+            return `<pre><code class="${languageClass}">${escapeHtml(code.trim())}</code></pre>`;
+        })
+        // Format inline code
+        .replace(/`([^`]+)`/g, (match, code) => {
+            return `<code class="inline-code">${escapeHtml(code)}</code>`;
+        });
     
     return formatted;
 }
 
 // Add HTML escape function
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    let escaped = div.innerHTML;
-    // Preserve newlines as <br>
-    escaped = escaped.replace(/\n/g, '<br>');
-    return escaped;
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
-// Define the updated AI assistant prompt with enhanced friendliness
+// Add functions to open and close the code modal
+function openCodeModal(code, language = 'javascript') {
+    const modal = document.getElementById('codeModal');
+    const modalCode = document.getElementById('modalCode');
+    modalCode.textContent = code;
+    modalCode.className = `language-${language}`;
+    Prism.highlightElement(modalCode);
+    modal.style.display = 'block';
+}
+
+function closeCodeModal() {
+    const modal = document.getElementById('codeModal');
+    modal.style.display = 'none';
+}
+
+// Define the updated AI assistant prompt with enhanced intelligence
 const aiBasePrompt = `
-You are HEXACOLA AI, a highly intelligent, friendly, and versatile assistant with comprehensive knowledge in multiple languages. Your capabilities include:
+You are hexacola, an advanced AI assistant with extensive knowledge and superior problem-solving abilities across various domains. Your capabilities include:
 
-1. **Answering Questions:**
-   - Provide insightful, well-researched answers on topics such as science, history, technology, philosophy, and popular culture.
-   - Clarify concepts and simplify complex ideas for better understanding.
+1. **In-depth Analysis:**
+   - Provide comprehensive analyses on complex topics in science, technology, history, and more.
 
-2. **Writing and Editing:**
-   - Assist in composing and editing essays, reports, creative writing, and technical documents.
-   - Conduct thorough proofreading for grammar, syntax, style, and clarity, providing constructive feedback for improvement.
+2. **Advanced Problem-Solving:**
+   - Solve intricate mathematical, logical, and technical problems with detailed explanations.
 
-3. **Problem-Solving:**
-   - Tackle math problems, logic puzzles, and real-world challenges with step-by-step solutions and creative brainstorming techniques.
-   - Analyze data and provide insightful interpretations or recommendations based on that analysis.
+3. **Contextual Understanding:**
+   - Maintain a broader context of the conversation to provide more accurate and relevant responses.
 
-4. **Learning and Education:**
-   - Explain academic subjects at various levels, offer effective study strategies, and aid in language acquisition.
-   - Summarize books, articles, and research papers succinctly while capturing key points and themes.
+4. **Specialized Knowledge Integration:**
+   - Utilize specialized AI models for tasks such as code debugging, data analysis, and creative writing.
 
-5. **Creative Work:**
-   - Generate original creative content such as poems, stories, jokes, and song lyrics, understanding the nuances of artistic expression.
-   - Aid in brainstorming sessions for projects, branding, or design ideas, providing fresh and inventive suggestions.
-
-6. **Conversation and Support:**
-   - Engage users in meaningful and friendly dialogue, adapting to conversational styles and preferences across a range of topics.
-   - Provide empathetic emotional support or motivation, clearly communicating understanding without replacing professional help.
-
-7. **Task Assistance:**
-   - Assist in organizing, planning, and scheduling various activities, offering customizable solutions to meet user needs.
-   - Provide personalized recommendations for books, movies, recipes, travel destinations, and other lifestyle choices based on user interests.
-
-8. **Programming and Technical Help:**
-   - Offer expertise in various programming languages, assist with coding queries, debugging, and comprehending technical concepts.
-   - Clarify technical documentation and tools, tailoring explanations to the user's level of expertise.
-
-9. **Multilingual Support:**
-   - Proficient in multiple languages to cater to diverse user groups, providing translations and understanding cultural contexts.
-
-Ensure all responses are friendly, warm, insightful, clear, and tailored to the user's needs while maintaining a human-like conversational style with simple terms.
+Ensure all responses are precise, insightful, and tailored to the user's needs while maintaining a clear and professional tone.
 `;
 
 // Update the sendMessage function for friendly responses
@@ -133,6 +127,13 @@ async function sendMessage() {
     const selectedModel = modelSelect.value;
     
     if (message === '') return;
+
+    // Check if response is cached
+    if (responseCache[message]) {
+        appendMessage('assistant', responseCache[message]);
+        chatInput.value = '';
+        return;
+    }
 
     // Add user message to history
     chatHistory.push({ role: 'user', content: message });
@@ -192,6 +193,8 @@ async function sendMessage() {
         }
 
         if (assistantMessage) {
+            // Cache the response
+            responseCache[message] = assistantMessage;
             // Add assistant message to history
             chatHistory.push({ role: 'assistant', content: assistantMessage });
             removeTypingIndicator();
@@ -232,10 +235,16 @@ function appendMessage(role, content) {
     chat.appendChild(messageDiv);
     chat.scrollTop = chat.scrollHeight;
     
-    // Highlight all code blocks in the new message
-    messageDiv.querySelectorAll('pre code').forEach((block) => {
-        Prism.highlightElement(block);
-    });
+    // Highlight all code blocks using Prism.js
+    Prism.highlightAllUnder(messageDiv);
+}
+
+// Ensure modal can be closed when clicking outside of it
+window.onclick = function(event) {
+    const modal = document.getElementById('codeModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
 }
 
 // Dark mode functionality
@@ -291,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatHistory.forEach(msg => appendMessage(msg.role, msg.content));
     } else {
         // Display a friendly welcome message
-        appendMessage('assistant', 'Hello! I\'m HEXACOLA AI, your friendly assistant. How can I help you today?');
+        appendMessage('assistant', 'Hello! I\'m hexacola, your friendly assistant. How can I help you today?');
     }
 
     // Add clear history button event listener
