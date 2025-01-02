@@ -1,4 +1,5 @@
-@import url("https://use.fontawesome.com/releases/v5.15.4/css/all.css");
+/* Updated FontAwesome to version 6 */
+@import url("https://use.fontawesome.com/releases/v6.4.0/css/all.css");
 /* CSS Variables for Color Schemes */
 :root {
   /* Base Colors */
@@ -1445,4 +1446,176 @@ body.dark-mode .loading-message {
     font-family: 'Courier New', Courier, monospace;
     line-height: 1.5;
     /* Adjust letter-spacing and other typography as desired */
+}
+
+/* Hero Section */
+.hero-section {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: url('https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExYXBzNHVwc2ZzbzN0NWJudGx5aGU5d3VoMmhsNGlncTB6NGg4ZmZvbCZlcD12MV9pbnRlcmFsF9naWZfYnlfaWQmY3Q9Zw/2H9r8AKyYyecz9yyRq/giphy.gif') no-repeat center center;
+    background-size: cover;
+    position: relative;
+    color: white;
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+    box-shadow: var(--box-shadow);
+}
+
+.hero-section:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 15px;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.primary-btn, .secondary-btn {
+    padding: 1rem 2rem;
+    border-radius: var(--border-radius);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.primary-btn {
+    background: var(--accent-color);
+    color: var(--text-light);
+    border: none;
+}
+
+.primary-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+}
+
+.secondary-btn {
+    background: transparent;
+    color: var(--text-light);
+    border: 2px solid var(--text-light);
+}
+
+.secondary-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Quick Tools Section */
+.quick-tools {
+    margin: 2rem 0;
+}
+
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.tool-card {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tool-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--hover-shadow);
+}
+
+.tool-card i {
+    font-size: 2rem;
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+}
+
+.tool-card h3 {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.tool-card p {
+    color: var(--text-secondary);
+}
+
+/* Section Headers */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.version-badge {
+    background: var(--accent-color);
+    color: var(--text-light);
+    padding: 0.3rem 0.8rem;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+}
+
+/* Feature Cards */
+.feature-card {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.wip-badge {
+    background: var(--warning-color);
+    color: var(--text-light);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+/* Dark Mode Adjustments */
+.dark-mode .hero-section {
+    background: var(--dark-gradient);
+}
+
+.dark-mode .tool-card,
+.dark-mode .feature-card {
+    background: var(--dark-card-bg);
+}
+
+.dark-mode .primary-btn {
+    background: var(--dark-accent);
+}
+
+.dark-mode .primary-btn:hover {
+    background: var(--dark-accent-hover);
 }
