@@ -520,12 +520,32 @@ function appendMessage(role, content) {
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('chat-message', role);
     
+    // Generate unique message ID
+    const messageId = Date.now().toString();
+    messageDiv.setAttribute('data-message-id', messageId);
+    
+    // Store message content for continuation
+    if (role === 'assistant') {
+        reasoningData.currentMessage = content;
+        reasoningData.messageContext = {
+            messageId,
+            timestamp: Date.now()
+        };
+    }
+    
     // Format message content
     const formattedContent = formatMessage(content);
     messageDiv.innerHTML = formattedContent;
     
     chat.appendChild(messageDiv);
     chat.scrollTop = chat.scrollHeight;
+    
+    // Check if response might be incomplete
+    if (role === 'assistant' && (content.endsWith('...') || content.length >= 500)) {
+        reasoningData.isIncomplete = true;
+        reasoningData.lastMessageId = messageId;
+        appendContinueButton(messageDiv);
+    }
     
     // Highlight all code blocks using Prism.js
     Prism.highlightAllUnder(messageDiv);
@@ -836,7 +856,11 @@ if (typeof DOMPurify === 'undefined') {
 const reasoningData = {
     currentStep: null,
     results: {},
-    errors: []
+    errors: [],
+    isIncomplete: false,
+    lastMessageId: null,
+    currentMessage: '',
+    messageContext: null
 };
 
 // Add Query Complexity Analysis
@@ -1051,5 +1075,78 @@ async function processThinkingStep(step, query) {
             };
         default:
             return null;
+    }
+}
+
+// Add after appendMessage function
+function appendContinueButton(messageDiv) {
+    const continueButton = document.createElement('button');
+    continueButton.classList.add('continue-button');
+    continueButton.innerHTML = '<i class="fas fa-ellipsis-h"></i> Continue Response';
+    continueButton.onclick = continueResponse;
+    messageDiv.appendChild(continueButton);
+}
+
+async function continueResponse() {
+    const lastMessage = document.querySelector(`[data-message-id="${reasoningData.lastMessageId}"]`);
+    if (!lastMessage) return;
+
+    // Remove the continue button
+    const continueButton = lastMessage.querySelector('.continue-button');
+    if (continueButton) {
+        continueButton.remove();
+    }
+
+    try {
+        showTypingIndicator();
+        
+        // Prepare continuation context
+        const continuationContext = {
+            previousContent: reasoningData.currentMessage,
+            lastContext: reasoningData.messageContext
+        };
+        
+        // Make API request to continue the response
+        const apiResponse = await fetchWithRetry(API_CONFIG.baseUrl, {
+            method: 'POST',
+            headers: API_CONFIG.headers,
+            body: JSON.stringify({
+                messages: [
+                    { role: 'assistant', content: reasoningData.currentMessage },
+                    { role: 'system', content: 'continue previous response' }
+                ],
+                model: document.getElementById('modelSelect').value,
+                parentMessageId: reasoningData.lastMessageId,
+                context: continuationContext
+            })
+        });
+
+        if (!apiResponse.ok) {
+            throw new Error(API_CONFIG.errorMessages[apiResponse.status]);
+        }
+
+        const data = await apiResponse.text();
+        removeTypingIndicator();
+
+        // Update the current message with the continuation
+        reasoningData.currentMessage += data;
+        
+        // Append the continuation to the last message
+        lastMessage.innerHTML = formatMessage(reasoningData.currentMessage);
+        
+        // Check if response is still incomplete
+        if (data.endsWith('...') || data.length >= 500) {
+            appendContinueButton(lastMessage);
+        } else {
+            reasoningData.isIncomplete = false;
+            reasoningData.lastMessageId = null;
+            reasoningData.currentMessage = '';
+            reasoningData.messageContext = null;
+        }
+
+    } catch (error) {
+        console.error('Error in continuing response:', error);
+        removeTypingIndicator();
+        appendMessage('assistant', `I apologize, but I encountered an error while continuing: ${error.message}`);
     }
 }
