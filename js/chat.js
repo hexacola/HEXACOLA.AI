@@ -127,12 +127,226 @@ Ensure all responses are precise, insightful, and tailored to the user's needs w
 
 // Add AI thinking process steps
 const aiThinkingSteps = {
-    understand: "Understanding your query...",
-    analyze: "Analyzing context and components...",
-    generate: "Generating thoughtful response...",
-    verify: "Verifying accuracy and relevance...",
-    formulate: "Formulating final response..."
+    understand: {
+        label: "Understanding Query",
+        process: (query) => ({
+            components: query.split(' ').filter(word => word.length > 3),
+            intent: detectIntent(query),
+            domain: detectDomain(query),
+            requirements: extractRequirements(query)
+        })
+    },
+    analyze: {
+        label: "Analyzing Context",
+        process: (context) => ({
+            relevantHistory: context.slice(-3),
+            patterns: findPatterns(context),
+            keywords: extractKeywords(context)
+        })
+    },
+    reason: {
+        label: "Logical Reasoning",
+        process: (data) => ({
+            concepts: identifyRelatedConcepts(data),
+            approach: determineApproach(data),
+            considerations: gatherConsiderations(data)
+        })
+    },
+    formulate: {
+        label: "Formulating Response",
+        process: (reasoning) => ({
+            structure: buildResponseStructure(reasoning),
+            tone: determineTone(reasoning),
+            examples: gatherExamples(reasoning)
+        })
+    },
+    verify: {
+        label: "Verifying Accuracy",
+        process: (response) => ({
+            completeness: checkCompleteness(response),
+            relevance: checkRelevance(response),
+            clarity: assessClarity(response)
+        })
+    }
 };
+
+// Add helper functions for reasoning process
+function detectDomain(query) {
+    const domains = {
+        technical: /\b(code|programming|software|hardware|computer|tech)\b/i,
+        scientific: /\b(science|physics|chemistry|biology|math)\b/i,
+        creative: /\b(art|design|write|create|generate|story)\b/i,
+        general: /\b(what|how|why|when|explain|help)\b/i
+    };
+    
+    for (const [domain, pattern] of Object.entries(domains)) {
+        if (pattern.test(query)) return domain;
+    }
+    return 'general';
+}
+
+function extractRequirements(query) {
+    const requirements = {
+        needsExample: /\b(example|show|demonstrate)\b/i,
+        needsExplanation: /\b(explain|why|how)\b/i,
+        needsSteps: /\b(steps|guide|tutorial|how to)\b/i,
+        needsComparison: /\b(versus|vs|compare|difference)\b/i
+    };
+    
+    return Object.entries(requirements)
+        .filter(([_, pattern]) => pattern.test(query))
+        .map(([req]) => req);
+}
+
+// Update message formatting for reasoning display
+function formatReasoningStep(step, data) {
+    return `**${step.label}**\n${JSON.stringify(data, null, 2)}`;
+}
+
+// Add missing helper functions for reasoning process
+function findPatterns(context) {
+    // Analyze last few messages for patterns
+    const patterns = [];
+    if (context && context.length > 1) {
+        const lastMessages = context.slice(-3);
+        const keywords = lastMessages.map(msg => 
+            msg.content.toLowerCase().match(/\b\w{4,}\b/g) || []
+        );
+        // Find repeated keywords
+        const repeatedWords = keywords.flat().filter((word, i, arr) => 
+            arr.indexOf(word) !== i
+        );
+        if (repeatedWords.length) {
+            patterns.push('repeated_keywords');
+        }
+    }
+    return patterns;
+}
+
+function extractKeywords(context) {
+    const keywords = new Set();
+    if (context && context.length) {
+        context.forEach(msg => {
+            const words = msg.content.toLowerCase()
+                .match(/\b\w{4,}\b/g) || [];
+            words.forEach(word => keywords.add(word));
+        });
+    }
+    return Array.from(keywords);
+}
+
+function identifyRelatedConcepts(data) {
+    const concepts = new Set();
+    if (data.understanding && data.understanding.domain) {
+        switch (data.understanding.domain) {
+            case 'technical':
+                concepts.add('programming');
+                concepts.add('technology');
+                break;
+            case 'scientific':
+                concepts.add('research');
+                concepts.add('analysis');
+                break;
+            case 'creative':
+                concepts.add('design');
+                concepts.add('innovation');
+                break;
+            default:
+                concepts.add('general_knowledge');
+        }
+    }
+    return Array.from(concepts);
+}
+
+function determineApproach(data) {
+    const intent = data.understanding?.intent || 'unknown';
+    const domain = data.understanding?.domain || 'general';
+    
+    // Map intent and domain to approach
+    const approaches = {
+        question: 'explanatory',
+        command: 'instructional',
+        statement: 'analytical',
+        greeting: 'conversational'
+    };
+    
+    return approaches[intent] || 'balanced';
+}
+
+function gatherConsiderations(data) {
+    return {
+        contextual: data.analysis?.relevantHistory?.length > 0,
+        technical: data.understanding?.domain === 'technical',
+        userLevel: determineUserLevel(data),
+        complexity: assessComplexity(data)
+    };
+}
+
+function determineUserLevel(data) {
+    const technicalTerms = /\b(api|function|code|programming|algorithm)\b/i;
+    const content = data.understanding?.components?.join(' ') || '';
+    return technicalTerms.test(content) ? 'technical' : 'general';
+}
+
+function assessComplexity(data) {
+    const requirements = data.understanding?.requirements || [];
+    return requirements.length > 2 ? 'high' : 'moderate';
+}
+
+function buildResponseStructure(reasoning) {
+    return {
+        format: reasoning.considerations?.technical ? 'technical' : 'conversational',
+        sections: determineResponseSections(reasoning),
+        style: reasoning.approach
+    };
+}
+
+function determineResponseSections(reasoning) {
+    const sections = ['main_points'];
+    if (reasoning.considerations?.technical) {
+        sections.push('code_examples');
+    }
+    if (reasoning.considerations?.contextual) {
+        sections.push('context_reference');
+    }
+    return sections;
+}
+
+function determineTone(reasoning) {
+    if (reasoning.approach === 'conversational') return 'friendly';
+    if (reasoning.approach === 'technical') return 'professional';
+    return 'balanced';
+}
+
+function gatherExamples(reasoning) {
+    const exampleTypes = [];
+    if (reasoning.considerations?.technical) {
+        exampleTypes.push('code');
+    }
+    if (reasoning.approach === 'explanatory') {
+        exampleTypes.push('analogies');
+    }
+    return exampleTypes;
+}
+
+function checkCompleteness(response) {
+    const missingElements = [];
+    // Basic completeness checks
+    if (!response) missingElements.push('empty_response');
+    if (response?.length < 50) missingElements.push('too_short');
+    return missingElements.length === 0;
+}
+
+function checkRelevance(response) {
+    // Simple relevance check
+    return true; // Implement more sophisticated checks as needed
+}
+
+function assessClarity(response) {
+    // Basic clarity checks
+    const unclear = /\b(unclear|confusing|hard to understand)\b/i;
+    return !unclear.test(response);
+}
 
 // Update the sendMessage function for friendly responses
 async function sendMessage() {
@@ -160,6 +374,40 @@ async function sendMessage() {
     showThinkingProcess();
 
     try {
+        const query = message;
+        const reasoningSteps = {};
+        
+        // Execute each reasoning step
+        reasoningSteps.understand = aiThinkingSteps.understand.process(query);
+        reasoningSteps.analyze = aiThinkingSteps.analyze.process(chatHistory);
+        reasoningSteps.reason = aiThinkingSteps.reason.process({
+            understanding: reasoningSteps.understand,
+            analysis: reasoningSteps.analyze
+        });
+        
+        // Enhanced context with reasoning
+        const enhancedContext = {
+            reasoning: reasoningSteps,
+            intent: reasoningSteps.understand.intent,
+            domain: reasoningSteps.understand.domain,
+            approach: reasoningSteps.reason.approach
+        };
+
+        // Add reasoning to the system message
+        const systemMessage = `
+            ${aiBasePrompt}
+            
+            Reasoning Context:
+            ${JSON.stringify(enhancedContext, null, 2)}
+            
+            Based on this analysis:
+            1. Domain: ${enhancedContext.domain}
+            2. Intent: ${enhancedContext.intent}
+            3. Approach: ${enhancedContext.approach}
+            
+            Please provide a well-reasoned response that addresses the user's needs.
+        `;
+
         const contextSize = 15; // Increased context window
         const lastMessages = chatHistory.slice(-contextSize);
         
@@ -167,7 +415,7 @@ async function sendMessage() {
         const prioritizedMessages = [
             {
                 role: 'system',
-                content: aiBasePrompt
+                content: systemMessage
             },
             // Add memory reinforcement message
             {
@@ -228,12 +476,20 @@ async function sendMessage() {
         }
 
         if (assistantMessage) {
+            // Verify response before sending
+            reasoningSteps.verify = aiThinkingSteps.verify.process(assistantMessage);
+            
+            // Remove double response
             removeThinkingProcess();
+            removeTypingIndicator();
+            
             // Cache the response
             responseCache[message] = assistantMessage;
+            
             // Add assistant message to history
             chatHistory.push({ role: 'assistant', content: assistantMessage });
-            removeTypingIndicator();
+            
+            // Display message only once
             appendMessage('assistant', assistantMessage);
             
             // Save chat history to localStorage
@@ -256,21 +512,28 @@ function showThinkingProcess() {
     thinkingDiv.id = 'thinking-process';
     thinkingDiv.classList.add('thinking-process');
     
-    Object.values(aiThinkingSteps).forEach((step, index) => {
+    let stepDelay = 0;
+    Object.entries(aiThinkingSteps).forEach(([key, step], index) => {
         const stepDiv = document.createElement('div');
         stepDiv.classList.add('thinking-step');
-        stepDiv.textContent = step;
+        stepDiv.innerHTML = `
+            <div class="step-header">
+                <span class="step-number">${index + 1}</span>
+                <span class="step-label">${step.label}</span>
+            </div>
+            <div class="step-content"></div>
+        `;
         thinkingDiv.appendChild(stepDiv);
         
-        // Animate steps sequentially
         setTimeout(() => {
             stepDiv.classList.add('active');
-            // Mark previous step as complete
             if (index > 0) {
                 thinkingDiv.children[index - 1].classList.add('complete');
             }
             chat.scrollTop = chat.scrollHeight;
-        }, index * 1000);
+        }, stepDelay);
+        
+        stepDelay += 1000;
     });
     
     chat.appendChild(thinkingDiv);
