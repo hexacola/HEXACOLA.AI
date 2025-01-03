@@ -240,7 +240,7 @@
      */
      function showGenerator() {
       window.location.href = 'generator.html';
-  }
+    }
 
     function navigateToStoryboard() {
        window.location.href = 'storyboard.html';
@@ -277,6 +277,28 @@
     }
     function navigateToScriptwriter() {
       window.location.href = 'scriptwriter.html';
+    }
+
+    // Add the missing addTooltips function
+    function addTooltips() {
+      const tooltips = document.querySelectorAll('.tooltip');
+      tooltips.forEach(tooltip => {
+        tooltip.addEventListener('mouseover', function(e) {
+          const tooltipText = this.querySelector('.tooltiptext');
+          if (tooltipText) {
+            tooltipText.style.visibility = 'visible';
+            tooltipText.style.opacity = '1';
+          }
+        });
+        
+        tooltip.addEventListener('mouseout', function(e) {
+          const tooltipText = this.querySelector('.tooltiptext');
+          if (tooltipText) {
+            tooltipText.style.visibility = 'hidden';
+            tooltipText.style.opacity = '0';
+          }
+        });
+      });
     }
   </script>
 </body>
