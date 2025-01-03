@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Scriptwriter - HexaCola</title>
+    <title>Scriptwriter - HexaCola AI</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="css/scriptwriter.css">
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -39,12 +41,30 @@
     <!-- Main Content Area -->
     <div class="main-wrapper">
         <div class="container active">
-            <div class="header">
-                <h1>AI Scriptwriter</h1>
-                <p>Coming Soon</p>
+            <!-- Editor Toolbar -->
+            <div class="editor-header">
+                <div class="editor-title">
+                    <input type="text" placeholder="Untitled Script" id="document-title">
+                </div>
+                <div class="editor-actions">
+                    <button id="saveBtn" class="action-btn">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <button id="exportBtn" class="action-btn">
+                        <i class="fas fa-file-export"></i> Export
+                    </button>
+                </div>
             </div>
-            
-            <!-- Content will be added here in future updates -->
+
+            <!-- Editor Container -->
+            <div class="editor-container">
+                <div id="toolbar">
+                    <!-- Quill toolbar will be inserted here -->
+                </div>
+                <div id="editor">
+                    <!-- Editor content will go here -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -53,23 +73,7 @@
         <p>© 2024 HexaCola AI. All rights reserved.</p>
     </footer>
 
-    <!-- Navigation Scripts -->
-    <script>
-        function navigateToHome() { window.location.href = 'index.html'; }
-        function showGenerator() { window.location.href = 'generator.html'; }
-        function navigateToStoryboard() { window.location.href = 'storyboard.html'; }
-        function navigateToScriptwriter() { window.location.href = 'scriptwriter.html'; }
-        function navigateToChat() { window.location.href = 'chat.html'; }
-        function toggleDarkMode() {
-            document.body.classList.toggle("dark-mode");
-            localStorage.setItem("darkMode", document.body.classList.contains("dark-mode"));
-        }
-        // Load dark mode preference on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem("darkMode") === "true") {
-                document.body.classList.add("dark-mode");
-            }
-        });
-    </script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="js/scriptwriter.js"></script>
 </body>
 </html>
