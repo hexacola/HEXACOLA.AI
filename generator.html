@@ -181,11 +181,38 @@
       
       <!-- Loading Indicator -->
       <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Generating">
-        <div class="loader"></div>
-        <div id="timer">Generating: 0s</div>
-         <!-- Progress Bar -->
-        <div class="progress-container" id="progressOverlay" hidden aria-label="Generation progress">
-          <div class="progress-bar" id="progressOverlayBar"></div>
+        <div class="loading-container">
+          <div class="hexagon-loader">
+            <div class="hexagon"></div>
+          </div>
+          <div id="timer" class="loading-text">Initializing...</div>
+          <div id="loadingMessage" class="loading-message">Preparing to generate your masterpiece...</div>
+          <div class="thinking-process" id="thinkingProcess">
+            <div class="thinking-step" data-step="1">
+              <div class="step-header">
+                <span class="step-number">1</span>
+                <span class="step-label">Analyzing Prompts</span>
+              </div>
+              <div class="step-content">Processing your creative inputs...</div>
+            </div>
+            <div class="thinking-step" data-step="2">
+              <div class="step-header">
+                <span class="step-number">2</span>
+                <span class="step-label">Optimizing Parameters</span>
+              </div>
+              <div class="step-content">Fine-tuning generation settings...</div>
+            </div>
+            <div class="thinking-step" data-step="3">
+              <div class="step-header">
+                <span class="step-number">3</span>
+                <span class="step-label">Creating Image</span>
+              </div>
+              <div class="step-content">Bringing your vision to life...</div>
+            </div>
+          </div>
+          <div class="progress-container" id="progressOverlay" hidden>
+            <div class="progress-bar" id="progressOverlayBar"></div>
+          </div>
         </div>
       </div>
     </main>
