@@ -79,6 +79,40 @@
     background: var(--surface-color);
 }
 
+.ql-editor {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12pt;
+  line-height: 1.5;
+}
+
+/* Basic classes for script format (optional usage) */
+.scene-heading {
+  text-transform: uppercase;
+  margin: 1em 0 0.5em 0;
+}
+
+.character {
+  margin-left: 2in;
+  margin-bottom: 0.2em;
+  text-transform: uppercase;
+}
+
+.dialogue {
+  margin-left: 1.5in;
+  margin-bottom: 1em;
+}
+
+.parenthetical {
+  margin-left: 1.4in;
+  font-style: italic;
+}
+
+.transition {
+  text-align: right;
+  text-transform: uppercase;
+  margin: 1em 0;
+}
+
 /* Dark Mode Adjustments */
 .editor-container.dark {
     background: var(--surface-color);
