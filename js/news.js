@@ -29,8 +29,12 @@ searchInput.addEventListener('keypress', (e) => {
  * Initialize News Sidebar
  */
 async function initializeNews() {
-    newsContent.innerHTML = getLoadingHTML();
-    await fetchAndDisplayNews();
+    try {
+        newsContent.innerHTML = getLoadingHTML();
+        await fetchAndDisplayNews();
+    } catch (error) {
+        handleError('Failed to initialize news feed');
+    }
 }
 
 /**
@@ -48,13 +52,26 @@ function closeSidebar() {
 }
 
 /**
- * Handle Search
+ * Handle Search with Debouncing
  */
-async function handleSearch() {
+const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+};
+
+const debouncedSearch = debounce(async () => {
     currentPage = 1;
-    currentQuery = searchInput.value.trim() || 'generative AI OR AI-generated images OR AI text generation';
+    const searchTerm = searchInput.value.trim();
+    currentQuery = searchTerm || 'generative AI OR AI-generated images OR AI text generation';
     newsContent.innerHTML = getLoadingHTML();
     await fetchAndDisplayNews();
+}, 500);
+
+async function handleSearch() {
+    await debouncedSearch();
 }
 
 /**
@@ -71,22 +88,44 @@ async function loadMoreNews() {
  */
 async function fetchAndDisplayNews(append = false) {
     try {
-        const newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(currentQuery)}&apiKey=${NEWS_API_KEY}&pageSize=5&page=${currentPage}`;
+        const newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(currentQuery)}&apiKey=${NEWS_API_KEY}&pageSize=5&page=${currentPage}&language=en&sortBy=publishedAt`;
         const response = await fetch(newsApiUrl);
+        
+        if (!response.ok) {
+            throw new Error(`API responded with status: ${response.status}`);
+        }
+
         const data = await response.json();
 
+        if (data.status === 'error') {
+            throw new Error(data.message || 'News API error');
+        }
+
         if (!data.articles || data.articles.length === 0) {
-            if (!append) {
-                newsContent.innerHTML = '<p>No news found. Try a different search.</p>';
-            }
-            loadMoreBtn.style.display = 'none';
+            handleNoResults(append);
             return;
         }
 
-        const newsHTML = await Promise.all(data.articles.map(async article => {
-            const summary = await summarizeArticle(article.description);
-            return createNewsItemHTML(article, summary);
-        }));
+        await displayNewsArticles(data.articles, append);
+    } catch (error) {
+        handleError(error.message);
+    }
+}
+
+/**
+ * Display News Articles
+ * @param {Array} articles - Array of article objects
+ * @param {boolean} append - Whether to append or replace content
+ */
+async function displayNewsArticles(articles, append) {
+    try {
+        const newsHTML = await Promise.all(
+            articles.map(async article => {
+                const sanitizedArticle = sanitizeArticle(article);
+                const summary = await summarizeArticle(sanitizedArticle.description);
+                return createNewsItemHTML(sanitizedArticle, summary);
+            })
+        );
 
         if (append) {
             newsContent.innerHTML += newsHTML.join('');
@@ -96,27 +135,85 @@ async function fetchAndDisplayNews(append = false) {
 
         loadMoreBtn.style.display = 'block';
     } catch (error) {
-        console.error('Error fetching news:', error);
-        if (!append) {
-            newsContent.innerHTML = '<p>Error loading news. Please try again later.</p>';
-        }
+        handleError('Error displaying articles');
     }
 }
 
 /**
- * Summarize Article using SearchGPT
+ * Summarize Article using SearchGPT with retry mechanism
  * @param {string} description - Article description
  * @returns {Promise<string>} - Summarized description
  */
 async function summarizeArticle(description) {
-    try {
-        const response = await fetch(`${POLLINATIONS_API}/summarize?text=${encodeURIComponent(description)}&model=searchgpt`);
-        const data = await response.json();
-        return data.summary || description;
-    } catch (error) {
-        console.error('Error summarizing article:', error);
-        return description;
+    const maxRetries = 3;
+    let retries = 0;
+
+    while (retries < maxRetries) {
+        try {
+            const response = await fetch(`${POLLINATIONS_API}/summarize?text=${encodeURIComponent(description)}&model=searchgpt`);
+            
+            if (!response.ok) {
+                throw new Error(`Summarization API responded with status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.summary || description;
+        } catch (error) {
+            retries++;
+            if (retries === maxRetries) {
+                console.warn('Summarization failed, using original description:', error);
+                return description;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+        }
     }
+    return description;
+}
+
+/**
+ * Sanitize Article Data
+ * @param {Object} article - Article data
+ * @returns {Object} - Sanitized article
+ */
+function sanitizeArticle(article) {
+    return {
+        title: sanitizeHTML(article.title || 'No title available'),
+        description: sanitizeHTML(article.description || 'No description available'),
+        url: article.url || '#',
+        urlToImage: article.urlToImage || '',
+        publishedAt: article.publishedAt || new Date().toISOString()
+    };
+}
+
+/**
+ * Sanitize HTML content
+ * @param {string} str - HTML string
+ * @returns {string} - Sanitized string
+ */
+function sanitizeHTML(str) {
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
+}
+
+/**
+ * Handle No Results
+ * @param {boolean} append - Whether to append or replace content
+ */
+function handleNoResults(append) {
+    if (!append) {
+        newsContent.innerHTML = '<p>No news found. Try a different search.</p>';
+    }
+    loadMoreBtn.style.display = 'none';
+}
+
+/**
+ * Handle Error
+ * @param {string} message - Error message
+ */
+function handleError(message) {
+    console.error(message);
+    newsContent.innerHTML = `<p>${message}. Please try again later.</p>`;
 }
 
 /**
