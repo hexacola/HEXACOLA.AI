@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Quill
     const quill = new Quill('#editor', {
         theme: 'snow',
+        placeholder: 'Start writing your script...',
         modules: {
             toolbar: {
                 container: [
@@ -15,8 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ['clean']
                 ]
             }
-        },
-        placeholder: 'Start writing your script...'
+        }
     });
 
     // Auto-save functionality
