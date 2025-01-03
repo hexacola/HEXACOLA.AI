@@ -39,21 +39,29 @@ const API_CONFIG = {
 
 // AI Assistant Prompt
 const aiBasePrompt = `
-You are hexacola, an advanced AI assistant with extensive knowledge and superior problem-solving abilities across various domains. Your capabilities include:
+You are hexacola, an advanced AI assistant specialized in:
 
-1. **In-depth Analysis:**
-   - Provide comprehensive analyses on complex topics in science, technology, history, and more.
+1. Programming & Technical Support:
+   - Debugging code and providing optimized solutions
+   - Explaining complex technical concepts clearly
+   - Offering best practices and design patterns
 
-2. **Advanced Problem-Solving:**
-   - Solve intricate mathematical, logical, and technical problems with detailed explanations.
+2. Creative & Analytical Tasks:
+   - Problem-solving with structured approaches
+   - Data analysis and visualization suggestions
+   - Creative writing and content generation
 
-3. **Contextual Understanding:**
-   - Maintain a broader context of the conversation to provide more accurate and relevant responses.
+3. Learning & Knowledge:
+   - Breaking down complex topics into understandable parts
+   - Providing relevant examples and analogies
+   - Citing sources and explaining reasoning
 
-4. **Specialized Knowledge Integration:**
-   - Utilize specialized AI models for tasks such as code debugging, data analysis, and creative writing.
+4. Communication Style:
+   - Professional yet friendly tone
+   - Clear, concise explanations
+   - Step-by-step breakdowns when needed
 
-Ensure all responses are precise, insightful, and tailored to the user's needs while maintaining a clear and professional tone.
+Respond with accuracy, clarity, and context-awareness while maintaining ethical considerations.
 `;
 
 // AI Thinking Steps
@@ -131,6 +139,16 @@ function simulateThinking(duration) {
 }
 
 function detectMainGoal(query) {
+    const firstMessage = chatHistoryManager.getFirstMessage();
+    const context = chatHistoryManager.getConversationContext();
+    
+    // If asking about conversation history
+    if (/first message|previous|earlier|before|last time/i.test(query)) {
+        if (firstMessage) {
+            return 'conversation_history';
+        }
+    }
+    
     const goals = {
         learn: /how|what|explain|understand/i,
         solve: /fix|solve|help|issue/i,
@@ -281,16 +299,19 @@ function identifyRequirements(query) {
 }
 
 function analyzeContext(query) {
-    // Ensure chatHistory is properly initialized
-    if (!Array.isArray(chatHistory)) {
-        chatHistory = [];
-    }
-    
-    // Return both chat history and current query for context
+    const enhancedContext = chatHistoryManager.getEnhancedContext();
+    const currentAnalysis = contextAnalyzer.analyzeConversationFlow([
+        ...chatHistoryManager.history,
+        { role: 'user', content: query, timestamp: Date.now() }
+    ]);
+
     return {
-        history: chatHistory,
-        currentQuery: query,
-        lastMessages: chatHistory.slice(-3)
+        ...enhancedContext,
+        currentQuery: {
+            content: query,
+            analysis: currentAnalysis
+        },
+        recommendedApproach: determineResponseStrategy(enhancedContext, currentAnalysis)
     };
 }
 
@@ -331,6 +352,13 @@ function determineResponseSections(reasoning) {
 }
 
 async function generateContent(plan) {
+    if (plan.mainGoal === 'conversation_history') {
+        const summary = chatHistoryManager.getConversationSummary();
+        const context = chatHistoryManager.getEnhancedContext();
+        
+        return formatHistoryResponse(summary, context);
+    }
+    
     // Placeholder for generating content based on the plan
     // This should be replaced with actual content generation logic or API calls
     return "This is a generated response based on the formulated approach.";
@@ -669,7 +697,8 @@ async function sendMessage() {
     if (message === '') return;
 
     try {
-        // Add user message
+        // Add user message to history
+        updateChatHistory('user', message);
         appendMessage('user', message);
         chatInput.value = '';
 
@@ -708,19 +737,20 @@ async function sendMessage() {
 
         const data = await apiResponse.text();
         removeTypingIndicator();
+        removeThinkingProcess(); // Hide thinking indicators
 
-        if (!complexity.isSimple) {
-           removeThinkingProcess();
-        }
-        // Add AI response
+        // Add AI response to history
+        updateChatHistory('assistant', data);
         appendMessage('assistant', data);
 
     } catch (error) {
         console.error('Error in message processing:', error);
         removeTypingIndicator();
-        removeThinkingProcess();
+        removeThinkingProcess(); // Ensure indicators are hidden on error
         reasoningData.errors.push(error.message);
-        appendMessage('assistant', `I apologize, but I encountered an error: ${error.message}. Please try again.`);
+        const errorMessage = `I apologize, but I encountered an error: ${error.message}. Please try again.`;
+        updateChatHistory('assistant', errorMessage);
+        appendMessage('assistant', errorMessage);
     } finally {
          reasoningData.currentStep = null;
          reasoningData.results = {};
@@ -795,6 +825,7 @@ function handleButtonClick(event) {
 // Event Listeners and Initialization
 document.addEventListener('DOMContentLoaded', () => {
     loadDarkMode();
+    loadChatHistory(); // Load chat history when page loads
 
     // Single event listener for all buttons using event delegation
     document.addEventListener('click', (event) => {
@@ -804,8 +835,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Chat input handler
+    // Initialize chat input and send button handlers
     const chatInput = document.getElementById('chatInput');
+    const sendButton = document.getElementById('sendMessageBtn');
+    
     if (chatInput) {
         chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -815,16 +848,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (sendButton) {
+        sendButton.addEventListener('click', sendMessage);
+    }
+
     // Clear chat handler
     const clearButton = document.getElementById('clearChat');
     if (clearButton) {
-        clearButton.addEventListener('click', () => {
-            chatHistory = [];
-            localStorage.removeItem('chatHistory');
-            const chat = document.getElementById('chat');
-            chat.innerHTML = '';
-            appendMessage('assistant', 'Chat history cleared. Let\'s start fresh!');
-        });
+        clearButton.addEventListener('click', clearChat);
     }
 
     // Load chat history
@@ -1149,4 +1180,456 @@ async function continueResponse() {
         removeTypingIndicator();
         appendMessage('assistant', `I apologize, but I encountered an error while continuing: ${error.message}`);
     }
+}
+
+// Enhanced Chat History Management
+const chatHistoryManager = {
+    history: [],
+    metadata: {
+        firstInteraction: null,
+        lastInteraction: null,
+        commonTopics: new Set(),
+        userPreferences: new Map()
+    },
+
+    addMessage(role, content) {
+        const timestamp = Date.now();
+        const message = {
+            role,
+            content,
+            timestamp,
+            topics: this.extractTopics(content)
+        };
+
+        // Update metadata
+        if (!this.metadata.firstInteraction) {
+            this.metadata.firstInteraction = message;
+        }
+        this.metadata.lastInteraction = message;
+        
+        // Update common topics
+        message.topics.forEach(topic => this.metadata.commonTopics.add(topic));
+        
+        // Add to history
+        this.history.push(message);
+        
+        // Save to localStorage
+        this.save();
+        
+        return message;
+    },
+
+    getConversationContext() {
+        return {
+            firstMessage: this.metadata.firstInteraction,
+            lastMessage: this.metadata.lastInteraction,
+            commonTopics: Array.from(this.metadata.commonTopics),
+            messageCount: this.history.length,
+            recentMessages: this.history.slice(-3),
+            preferences: Object.fromEntries(this.metadata.userPreferences)
+        };
+    },
+
+    extractTopics(content) {
+        // Enhanced topic extraction
+        const topics = new Set();
+        const words = content.toLowerCase().match(/\b\w{4,}\b/g) || [];
+        words.forEach(word => {
+            if (!commonWords.has(word)) {
+                topics.add(word);
+            }
+        });
+        return Array.from(topics);
+    },
+
+    getFirstMessage() {
+        if (this.metadata.firstInteraction) {
+            return {
+                content: this.metadata.firstInteraction.content,
+                timestamp: this.metadata.firstInteraction.timestamp,
+                topics: this.metadata.firstInteraction.topics
+            };
+        }
+        return null;
+    },
+
+    getConversationSummary() {
+        return {
+            firstMessage: this.getFirstMessage(),
+            totalMessages: this.history.length,
+            commonTopics: Array.from(this.metadata.commonTopics).slice(0, 5),
+            duration: this.metadata.lastInteraction ? 
+                (Date.now() - this.metadata.firstInteraction.timestamp) : 0
+        };
+    },
+
+    load() {
+        try {
+            const savedHistory = localStorage.getItem('chatHistory');
+            const savedMetadata = localStorage.getItem('chatMetadata');
+            
+            if (savedHistory) {
+                this.history = JSON.parse(savedHistory);
+                // Ensure timestamps are properly loaded
+                this.history = this.history.map(msg => ({
+                    ...msg,
+                    timestamp: msg.timestamp || Date.now()
+                }));
+            }
+            
+            if (savedMetadata) {
+                const metadata = JSON.parse(savedMetadata);
+                this.metadata = {
+                    firstInteraction: metadata.firstInteraction,
+                    lastInteraction: metadata.lastInteraction,
+                    commonTopics: new Set(metadata.commonTopics),
+                    userPreferences: new Map(Object.entries(metadata.userPreferences || {}))
+                };
+            }
+            
+            // Initialize metadata if first message exists but metadata doesn't
+            if (this.history.length > 0 && !this.metadata.firstInteraction) {
+                this.metadata.firstInteraction = this.history[0];
+                this.metadata.lastInteraction = this.history[this.history.length - 1];
+                this.save();
+            }
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+            this.clear();
+        }
+    },
+
+    save() {
+        try {
+            localStorage.setItem('chatHistory', JSON.stringify(this.history));
+            localStorage.setItem('chatMetadata', JSON.stringify({
+                firstInteraction: this.metadata.firstInteraction,
+                lastInteraction: this.metadata.lastInteraction,
+                commonTopics: Array.from(this.metadata.commonTopics),
+                userPreferences: new Map(Object.entries(this.metadata.userPreferences))
+            }));
+        } catch (error) {
+            console.error('Error saving chat history:', error);
+        }
+    },
+
+    clear() {
+        this.history = [];
+        this.metadata = {
+            firstInteraction: null,
+            lastInteraction: null,
+            commonTopics: new Set(),
+            userPreferences: new Map()
+        };
+        localStorage.removeItem('chatHistory');
+        localStorage.removeItem('chatMetadata');
+    },
+
+    getEnhancedContext() {
+        const context = this.getConversationContext();
+        const analysis = contextAnalyzer.analyzeConversationFlow(this.history);
+        
+        return {
+            ...context,
+            analysis,
+            conversationPatterns: {
+                topicChains: analysis.topicChains,
+                userPreferences: analysis.userPreferences,
+                interactionStyle: this.determineInteractionStyle(analysis)
+            },
+            relevantHistory: this.getRelevantHistory()
+        };
+    },
+
+    determineInteractionStyle(analysis) {
+        const patterns = analysis.interactionPatterns;
+        return {
+            isInquisitive: patterns.questionFrequency > 0.3,
+            preferredLength: patterns.responseLength.average > 200 ? 'detailed' : 'concise',
+            topicFocus: patterns.topicPersistence.length > 0 ? 'persistent' : 'varied'
+        };
+    },
+
+    getRelevantHistory() {
+        const recentMessages = this.history.slice(-5);
+        const relevantTopics = new Set(
+            recentMessages.flatMap(msg => extractTopics(msg.content))
+        );
+        
+        return this.history.filter(msg => 
+            extractTopics(msg.content).some(topic => relevantTopics.has(topic))
+        );
+    }
+};
+
+// Common words to filter out from topics
+const commonWords = new Set(['what', 'when', 'how', 'why', 'where', 'who', 'the', 'is', 'at', 'which', 'and', 'or', 'but']);
+
+// Update the existing chat-related functions to use the new manager
+function updateChatHistory(role, content) {
+    return chatHistoryManager.addMessage(role, content);
+}
+
+function loadChatHistory() {
+    chatHistoryManager.load();
+    if (chatHistoryManager.history.length > 0) {
+        chatHistoryManager.history.forEach(msg => appendMessage(msg.role, msg.content));
+    } else {
+        appendMessage('assistant', 'Hello! I\'m hexacola, your friendly assistant. How can I help you today?');
+    }
+}
+
+function clearChat() {
+    chatHistoryManager.clear();
+    const chat = document.getElementById('chat');
+    chat.innerHTML = '';
+    const welcomeMessage = 'Chat history cleared. Let\'s start fresh!';
+    updateChatHistory('assistant', welcomeMessage);
+    appendMessage('assistant', welcomeMessage);
+}
+
+// Update reasoning process steps
+Object.assign(reasoningProcess.steps, [
+    {
+        id: 'understand',
+        label: 'Understanding Query',
+        detail: 'Analyzing query intent, context, and technical requirements...',
+        process: async (query) => {
+            const intent = detectMainGoal(query);
+            const domain = detectDomain(query);
+            const requirements = identifyRequirements(query);
+            
+            return {
+                intent,
+                domain,
+                requirements,
+                complexity: assessQueryComplexity(query),
+                contextNeeded: determineContextRequirements(query)
+            };
+        }
+    },
+    {
+        id: 'analyze',
+        label: 'Deep Analysis',
+        detail: 'Evaluating technical depth, historical context, and knowledge requirements...',
+        process: async (data) => {
+            return {
+                technicalLevel: assessTechnicalLevel(data),
+                requiredKnowledge: identifyRequiredKnowledge(data),
+                contextRelevance: analyzeContextRelevance(data),
+                specializations: determineSpecializations(data)
+            };
+        }
+    },
+    {
+        id: 'formulate',
+        label: 'Response Planning',
+        detail: 'Creating structured response with examples and references...',
+        process: async (data) => {
+            return {
+                structure: buildResponseStructure(data),
+                examples: gatherRelevantExamples(data),
+                references: findReferences(data),
+                approach: determineResponseApproach(data)
+            };
+        }
+    }
+]);
+
+// Add new helper functions
+function assessTechnicalLevel(data) {
+    return data.intent === 'technical' ? 'high' : 'moderate';
+}
+
+function identifyRequiredKnowledge(data) {
+    return data.domain || 'general';
+}
+
+function analyzeContextRelevance(data) {
+    return true; // Placeholder - implement actual relevance check
+}
+
+function determineSpecializations(data) {
+    return ['general']; // Placeholder - implement actual specialization detection
+}
+
+function gatherRelevantExamples(data) {
+    return []; // Placeholder - implement example gathering
+}
+
+function findReferences(data) {
+    return []; // Placeholder - implement reference finding
+}
+
+function determineResponseApproach(data) {
+    return 'structured'; // Placeholder - implement approach determination
+}
+
+// Add context analysis functions
+const contextAnalyzer = {
+    analyzeConversationFlow(history) {
+        return {
+            topicChains: this.identifyTopicChains(history),
+            sentimentProgression: this.analyzeSentimentProgress(history),
+            userPreferences: this.extractUserPreferences(history),
+            interactionPatterns: this.findInteractionPatterns(history)
+        };
+    },
+
+    identifyTopicChains(history) {
+        const topics = new Map();
+        history.forEach(msg => {
+            const msgTopics = extractTopics(msg.content);
+            msgTopics.forEach(topic => {
+                if (!topics.has(topic)) {
+                    topics.set(topic, { count: 1, lastMention: msg.timestamp });
+                } else {
+                    const topicData = topics.get(topic);
+                    topics.set(topic, {
+                        count: topicData.count + 1,
+                        lastMention: msg.timestamp
+                    });
+                }
+            });
+        });
+        return topics;
+    },
+
+    analyzeSentimentProgress(history) {
+        let currentTone = 'neutral';
+        const sentimentFlow = history.map(msg => {
+            const sentiment = this.analyzeSentiment(msg.content);
+            currentTone = sentiment;
+            return { timestamp: msg.timestamp, sentiment };
+        });
+        return { flow: sentimentFlow, currentTone };
+    },
+
+    analyzeSentiment(text) {
+        // Simple sentiment analysis
+        const positive = /\b(good|great|awesome|excellent|happy|thank|love|appreciate)\b/i;
+        const negative = /\b(bad|poor|terrible|unhappy|hate|dislike|problem|issue)\b/i;
+        
+        if (positive.test(text)) return 'positive';
+        if (negative.test(text)) return 'negative';
+        return 'neutral';
+    },
+
+    extractUserPreferences(history) {
+        const preferences = new Map();
+        history.filter(msg => msg.role === 'user').forEach(msg => {
+            const prefs = this.findPreferences(msg.content);
+            prefs.forEach(pref => {
+                preferences.set(pref.type, pref.value);
+            });
+        });
+        return preferences;
+    },
+
+    findPreferences(text) {
+        const prefs = [];
+        const patterns = {
+            style: /prefer|like|want|need/i,
+            format: /format|structure|layout/i,
+            detail: /detailed|brief|concise/i
+        };
+
+        Object.entries(patterns).forEach(([type, pattern]) => {
+            if (pattern.test(text)) {
+                prefs.push({
+                    type,
+                    value: text.match(pattern)[0]
+                });
+            }
+        });
+        return prefs;
+    },
+
+    findInteractionPatterns(history) {
+        return {
+            questionFrequency: this.calculateQuestionFrequency(history),
+            responseLength: this.analyzeResponseLengths(history),
+            topicPersistence: this.analyzeTopicPersistence(history)
+        };
+    },
+
+    calculateQuestionFrequency(history) {
+        const questions = history.filter(msg => /\?/.test(msg.content)).length;
+        return questions / history.length;
+    },
+
+    analyzeResponseLengths(history) {
+        const lengths = history.map(msg => msg.content.length);
+        return {
+            average: lengths.reduce((a, b) => a + b, 0) / lengths.length,
+            trend: lengths[lengths.length - 1] > lengths[lengths.length - 2] ? 'increasing' : 'decreasing'
+        };
+    },
+
+    analyzeTopicPersistence(history) {
+        const topics = this.identifyTopicChains(history);
+        return Array.from(topics.entries())
+            .filter(([_, data]) => data.count > 1)
+            .map(([topic, data]) => ({
+                topic,
+                persistence: data.count / history.length
+            }));
+    }
+};
+
+function formatHistoryResponse(summary, context) {
+    const patterns = context.conversationPatterns;
+    const style = patterns.interactionStyle;
+    
+    return `Based on our conversation:
+    - We started with: "${summary.firstMessage.content}"
+    - Main topics: ${summary.commonTopics.join(', ')}
+    - Your preferred style: ${style.preferredLength} responses
+    - Common themes: ${patterns.topicPersistence.map(t => t.topic).join(', ')}
+    
+    How can I help you further with these topics?`;
+}
+
+function determineResponseStrategy(enhancedContext, currentAnalysis) {
+    const patterns = {
+        technical: /code|programming|debug|error|function|api|syntax/i,
+        conceptual: /explain|understand|concept|theory|principle/i,
+        problemSolving: /solve|fix|help|issue|problem|bug/i,
+        guidance: /recommend|suggest|advice|should|better/i
+    };
+
+    const strategy = {
+        type: 'informative',
+        depth: 'moderate',
+        tone: 'professional',
+        structure: 'organized'
+    };
+
+    // Determine type based on current query
+    for (const [type, pattern] of Object.entries(patterns)) {
+        if (pattern.test(currentAnalysis.content)) {
+            strategy.type = type;
+            break;
+        }
+    }
+
+    // Adjust depth based on conversation context
+    if (enhancedContext.analysis.topicChains.size > 2) {
+        strategy.depth = 'detailed';
+    }
+
+    // Adjust tone based on interaction history
+    if (enhancedContext.analysis.sentimentProgression?.currentTone === 'positive') {
+        strategy.tone = 'friendly';
+    }
+
+    // Adjust structure based on user preferences
+    const userPreference = enhancedContext.conversationPatterns?.interactionStyle?.preferredLength;
+    if (userPreference === 'detailed') {
+        strategy.structure = 'comprehensive';
+    } else if (userPreference === 'concise') {
+        strategy.structure = 'brief';
+    }
+
+    return strategy;
 }
