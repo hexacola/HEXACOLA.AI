@@ -89,10 +89,20 @@ async function loadMoreNews() {
 async function fetchAndDisplayNews(append = false) {
     try {
         const newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(currentQuery)}&apiKey=${NEWS_API_KEY}&pageSize=5&page=${currentPage}&language=en&sortBy=publishedAt`;
-        const response = await fetch(newsApiUrl);
+        const response = await fetch(newsApiUrl, {
+            headers: {
+                'User-Agent': 'Hexacola-AI/1.0',
+                'Accept': 'application/json',
+                'X-Api-Key': NEWS_API_KEY
+            }
+        });
         
+        if (response.status === 426) {
+            throw new Error('API requires HTTPS connection. Please ensure you\'re using a secure connection.');
+        }
+
         if (!response.ok) {
-            throw new Error(`API responded with status: ${response.status}`);
+            throw new Error(`API error: ${response.status} - ${response.statusText}`);
         }
 
         const data = await response.json();
@@ -108,7 +118,11 @@ async function fetchAndDisplayNews(append = false) {
 
         await displayNewsArticles(data.articles, append);
     } catch (error) {
-        handleError(error.message);
+        const errorMessage = error.message.includes('426') 
+            ? 'This API requires a secure connection. Please use HTTPS.'
+            : `Error loading news: ${error.message}`;
+        handleError(errorMessage);
+        loadMoreBtn.style.display = 'none';
     }
 }
 
