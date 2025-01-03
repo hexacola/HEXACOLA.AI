@@ -34,6 +34,36 @@
             </button>
         </nav>
     </header>
+    
+    <!-- Add the news sidebar -->
+    <div class="news-sidebar" id="newsSidebar">
+        <div class="news-header">
+            <h3><i class="fas fa-newspaper"></i> Creative AI News</h3>
+            <button class="close-sidebar" id="closeSidebar" aria-label="Close news sidebar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="news-search">
+            <input type="text" id="newsSearchInput" placeholder="Search AI creative news...">
+            <button id="searchNewsBtn" aria-label="Search news">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+        <div class="news-content" id="newsContent">
+            <!-- News items will be dynamically inserted here -->
+            <div class="news-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading news...</span>
+            </div>
+        </div>
+        <button class="load-more-news" id="loadMoreNews">
+            Load More News
+        </button>
+        <!-- Toggle button for news sidebar -->
+        <button class="toggle-news-sidebar" id="toggleNewsSidebar" aria-label="Toggle news sidebar">
+            <i class="fas fa-newspaper"></i>
+        </button>
+    </div>
 
     <div class="main-wrapper">
         <main class="container active" id="homeContainer">
@@ -309,6 +339,7 @@
     </footer>
 
     <script src="app.js"></script>
+    <script src="news.js"></script>
     <script>
         function navigateToHome() {
             window.location.href = 'index.html';
