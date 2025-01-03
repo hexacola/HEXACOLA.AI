@@ -197,39 +197,15 @@
         <p>© 2024 Tauris – HEXACOLA AI</p>
     </footer>
 
-    <!-- Ensure Prism.js is properly linked before chat.js -->
+    <!-- Move script tags before the final script -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
     <script src="js/chat.js"></script>
+    
+    <!-- Remove or update the inline script -->
     <script>
-        function showGenerator() {
-            window.location.href = 'generator.html';
-        }
-        function navigateToStoryboard() {
-            window.location.href = 'storyboard.html';
-        }
-        function navigateToChat() {
-            window.location.href = 'chat.html';
-        }
-        function navigateToHome() {
-            window.location.href = 'index.html';
-        }
-        function navigateToScriptwriter() {
-            window.location.href = 'scriptwriter.html';
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const sendButton = document.getElementById('sendMessageBtn');
-            if (sendButton) {
-                sendButton.addEventListener('click', () => {
-                    if (typeof sendMessage === 'function') {
-                        sendMessage();
-                    } else {
-                        console.error('sendMessage function not found');
-                    }
-                });
-            }
-        });
+        // Remove duplicate function declarations
+        // They are already in chat.js
     </script>
 </body>
 </html>
