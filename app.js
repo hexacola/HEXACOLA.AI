@@ -80,6 +80,55 @@ const colorSchemeDescriptions = {
   "Monochromatic": "A color scheme using variations in lightness and saturation of a single color, creating a cohesive and elegant look."
 };
 
+// Add these new functions after the existing global variables
+
+const loadingMessages = [
+  "Channeling creative energies...",
+  "Mixing digital paint...",
+  "Consulting the AI muses...",
+  "Weaving pixels together...",
+  "Calibrating artistic parameters...",
+  "Brewing visual magic...",
+  "Crafting your masterpiece...",
+  "Adding finishing touches..."
+];
+
+let loadingMessageInterval;
+let thinkingStepTimeout;
+
+function updateLoadingMessage() {
+  const loadingMessageEl = document.getElementById('loadingMessage');
+  loadingMessageEl.textContent = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+}
+
+function animateThinkingProcess() {
+  const steps = document.querySelectorAll('.thinking-step');
+  let currentStep = 0;
+
+  function activateStep(index) {
+    steps.forEach((step, i) => {
+      if (i < index) {
+        step.classList.add('complete', 'active');
+      } else if (i === index) {
+        step.classList.add('active');
+        step.classList.remove('complete');
+      } else {
+        step.classList.remove('active', 'complete');
+      }
+    });
+  }
+
+  function nextStep() {
+    if (currentStep < steps.length) {
+      activateStep(currentStep);
+      currentStep++;
+      thinkingStepTimeout = setTimeout(nextStep, 2000); // Advance to next step every 2 seconds
+    }
+  }
+
+  nextStep();
+}
+
 /**
  * Save settings to localStorage
  */
@@ -687,19 +736,25 @@ async function generateImage() {
   // For now, we will exclude the negative prompt from the URL
 
   try {
-    // Show loading overlay and start timer
+    // Show loading overlay and start animations
     const overlay = document.getElementById('overlay');
     const timer = document.getElementById('timer');
-    const progressOverlay = document.getElementById('progressOverlay');
-    const progressOverlayBar = document.getElementById('progressOverlayBar');
     overlay.style.display = 'flex';
-    progressOverlay.style.display = 'block';
+    
+    // Initialize loading animations
     let seconds = 0;
-    timer.textContent = `Generuojama: ${seconds}s`;
+    timer.textContent = `Generation time: ${seconds}s`;
     timerInterval = setInterval(() => {
       seconds++;
-      timer.textContent = `Generuojama: ${seconds}s`;
+      timer.textContent = `Generation time: ${seconds}s`;
     }, 1000);
+
+    // Start message rotation
+    updateLoadingMessage();
+    loadingMessageInterval = setInterval(updateLoadingMessage, 3000);
+
+    // Start thinking process animation
+    animateThinkingProcess();
 
     // Initialize progress bar
     totalImages = imageOptions;
@@ -799,12 +854,16 @@ async function generateImage() {
     alert('Klaida generuojant vaizdą. Bandykite dar kartą.');
     document.getElementById('generatedImage').innerHTML = '';
   } finally {
-    // Hide loading overlay and stop timer
-    document.getElementById('overlay').style.display = 'none';
+    // Clean up all animations
     clearInterval(timerInterval);
+    clearInterval(loadingMessageInterval);
+    clearTimeout(thinkingStepTimeout);
+    const steps = document.querySelectorAll('.thinking-step');
+    steps.forEach(step => step.classList.remove('active', 'complete'));
+    
+    document.getElementById('overlay').style.display = 'none';
     generateButton.disabled = false;
     document.getElementById('progressOverlay').style.display = 'none';
-    disableImageDownload();
   }
 }
 
