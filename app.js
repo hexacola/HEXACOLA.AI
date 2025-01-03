@@ -196,6 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeNegativePrompt();
   loadLibraryImages();
   disableImageDownload();
+  addEventListeners();
 });
 
 /**
@@ -1239,4 +1240,53 @@ function sanitizeHTML(str) {
   const temp = document.createElement('div');
   temp.textContent = str;
   return temp.innerHTML;
+}
+
+function addEventListeners() {
+    // Image modal events
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    const closeBtn = document.querySelector('.close');
+
+    // Close modal when clicking close button
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    // Close modal when clicking outside the image
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.style.display === 'block') {
+            modal.style.display = 'none';
+        }
+        if (e.key === 'Enter' && e.ctrlKey) {
+            generateImage();
+        }
+    });
+
+    // Input validation for width and height
+    const widthInput = document.getElementById('width');
+    const heightInput = document.getElementById('height');
+    const imageOptionsInput = document.getElementById('imageOptions');
+
+    [widthInput, heightInput].forEach(input => {
+        input.addEventListener('change', () => {
+            const value = parseInt(input.value);
+            if (value < 64) input.value = 64;
+            if (value > 2048) input.value = 2048;
+        });
+    });
+
+    // Validate number of images
+    imageOptionsInput.addEventListener('change', () => {
+        const value = parseInt(imageOptionsInput.value);
+        if (value < 1) imageOptionsInput.value = 1;
+        if (value > 10) imageOptionsInput.value = 10;
+    });
 }
